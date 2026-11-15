@@ -73,7 +73,9 @@ internal static unsafe class MenuFont
         SetBkMode(dc, 1);
         int* sz = stackalloc int[2];
         int y = 8, x = 8;
-        string[] faces = { antiqua ? "AntiquaSSK" : "Palatino Linotype", caro ? "Carolingia" : "Palatino Linotype" };
+        // la letra elegida en [Fonts] (Patches.GameFonts) o la del juego
+        string[] faces = { Patches.GameFonts.TextFace.Length > 0 ? Patches.GameFonts.TextFace : antiqua ? "AntiquaSSK" : "Palatino Linotype",
+                           Patches.GameFonts.TitleFace.Length > 0 ? Patches.GameFonts.TitleFace : caro ? "Carolingia" : "Palatino Linotype" };
         int[] px = { BodyPx, TitlePx };
         for (int f = 0; f < 2; f++)
         {
@@ -113,7 +115,7 @@ internal static unsafe class MenuFont
         SelectObject(dc, oldBmp);
         DeleteObject(bmp); DeleteDC(dc);
         if (_tex == 0) { Log.Warn("Menú: no se pudo crear la textura de la letra"); return false; }
-        Log.Info($"Menú: letras del juego ({faces[0]} y {faces[1]}), atlas de {W}x{H}");
+        Log.Info($"Menú: letras {faces[0]} y {faces[1]}, atlas de {W}x{H}");
         _failed = false;
         return true;
     }

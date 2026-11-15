@@ -49,6 +49,7 @@ internal static unsafe class QuestTracker
     public static bool DrawInScene()
     {
         if (!Enabled || !Backend.Current.Ready || !MenuFont.Build()) return false;
+        if (MiniMap.SidePanelOpen()) return false; // (taparía el inventario, el comerciante...)
         var (w, h) = Backend.Current.SceneSize;
         if (w <= 0 || h <= 0) return false;
         nint qa = *(nint*)0xAAD3A4, qb = *(nint*)0xAAD3A8;

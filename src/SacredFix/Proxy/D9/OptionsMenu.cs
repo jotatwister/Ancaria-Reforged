@@ -9,12 +9,13 @@ using SacredFix.Core;
 namespace SacredFix.Proxy.D9;
 
 /// <summary>
-/// Menú de opciones propio ([Menu] Enabled=1), encima del juego. Se abre y se cierra con F10 ([Menu] Key).
+/// Menú de opciones propio ([Menu] Enabled=1), encima del juego. Se abre con la opción «Ancaria Reforged» de los menús
+/// principal y de Escape del juego (EscMenuButton, MainMenuButton) o con una tecla si se elige ([Menu] Key, vacía por defecto).
 /// - Pestañas: Imagen (motor, color, enfoque, luz, MSAA...), Juego (minimapa, buffos, lanzar con una tecla, recargas,
 ///   contador de FPS) y Teclas (qué tecla física hace cada acción del juego: la traducción de [Keys] Remap).
 /// - Cada cambio se guarda al momento en SacredFix.ini (Config.Set, que antes del primer cambio guarda una copia
 ///   SacredFix.ini.original). Lo que se puede, se aplica en el acto; lo demás lleva «*» y se aplica al reiniciar.
-/// - Teclado: Tab / Mayús+Tab (o RePág / AvPág) cambian de pestaña, ↑↓ eligen, ←→ cambian, Intro activa, Esc o F10
+/// - Teclado: Tab / Mayús+Tab (o RePág / AvPág) cambian de pestaña, ↑↓ eligen, ←→ cambian, Intro activa, Esc (o su tecla)
 ///   cierran. En Teclas: Intro y luego la tecla nueva; Supr la deja en la suya.
 /// - Ratón: al pasar por encima se resalta; clic en una pestaña la abre; clic en el valor: mitad izquierda baja,
 ///   mitad derecha sube (Sí/No y teclas: cambia o empieza a esperar la tecla); rueda: desplaza la lista; clic fuera:
@@ -47,7 +48,7 @@ internal static unsafe class OptionsMenu
 
     public static bool IsOpen { get; private set; }
     private static readonly object _lock = new();
-    private static uint _toggleVk = 0x79; // F10
+    private static uint _toggleVk; // sin tecla (antes, F10)
     private static bool _enabled;
     private static Item? _capture; // tecla esperando la nueva
     private static int _clickLogs;
@@ -64,8 +65,11 @@ internal static unsafe class OptionsMenu
         Lang.Init(cfg);
         _enabled = cfg.GetBool("Menu", "Enabled", true);
         if (!_enabled) return;
-        string key = cfg.GetString("Menu", "Key", "F10").Trim().ToUpperInvariant();
+        string key = cfg.GetString("Menu", "Key", "").Trim().ToUpperInvariant();
         if (key.StartsWith('F') && int.TryParse(key[1..], out int fn) && fn >= 1 && fn <= 24) _toggleVk = (uint)(0x6F + fn);
+        if (key.Length == 0 || key == "NO" || key == "NONE") _toggleVk = 0; // (sin tecla: se abre con los botones de los menús del juego)
+        if (cfg.GetBool("Menu", "EscButton", true)) EscMenuButton.Install(); // (botón «Ancaria Reforged» en el menú de Escape)
+        if (cfg.GetBool("Menu", "MainButton", true)) MainMenuButton.Install(); // (opción «Ancaria Reforged» en el menú principal)
 
         // ---- Imagen ----
         var t = _tabs[0];
@@ -100,8 +104,8 @@ internal static unsafe class OptionsMenu
         Help(t, "Deja bandas negras para que la imagen no se deforme si tu monitor tiene otra forma que el juego.");
         Choice(t, cfg, "Motor gráfico", "Display", "Renderer", "d3d11", new[] { "d3d11", "d3d9" }, new[] { "Direct3D 11", "Direct3D 9" }, null);
         Help(t, "Direct3D 11 es el recomendado. Direct3D 9 es una alternativa por si da problemas en tu equipo.");
-        Choice(t, cfg, "Ancho del juego", "Display", "Width", "1366", new[] { "auto", "1366", "1229", "1024" }, new[] { "Monitor", "1366", "1229", "1024" }, null);
-        Help(t, "Anchura de la vista del juego (alto 768). Monitor: según la forma de tu pantalla. 1024 es el original; 1366 es el máximo seguro.");
+        Choice(t, cfg, "Ancho del juego", "Display", "Width", "auto", new[] { "auto", "1366", "1229", "1024" }, new[] { "Monitor", "1366", "1229", "1024" }, null);
+        Help(t, "Anchura de la vista del juego (alto 768). Monitor: según la forma de tu pantalla (hasta 21:9). 1024 es el original.");
         Bool(t, cfg, "Escalado de Windows", "Display", "DpiAware", true, null);
         Help(t, "Ignora el escalado de Windows (125 %, 150 %…) para que el juego no se vea borroso.");
 
@@ -110,6 +114,18 @@ internal static unsafe class OptionsMenu
         Header(t, "General");
         Choice(t, cfg, "Idioma / Language", "Menu", "Language", "es", new[] { "es", "en" }, new[] { "Castellano", "English" }, v => Lang.En = v == "en");
         Help(t, "Idioma de los textos de SacredFix. Los textos del juego (misiones, objetos) siguen el idioma del juego.");
+        {
+            var fam = Patches.GameFonts.Families();
+            var vals = new List<string> { "juego" }; vals.AddRange(fam);
+            var textNames = new List<string> { "AntiquaSSK (juego)" }; textNames.AddRange(fam);
+            var titleNames = new List<string> { "Carolingia (juego)" }; titleNames.AddRange(fam);
+            Choice(t, cfg, "Letra del texto", "Fonts", "Text", "juego", vals.ToArray(), textNames.ToArray(), null);
+            Help(t, "Tipo de letra de los textos del juego y del mod. Puedes elegir cualquiera instalada en Windows o copiar un .ttf u .otf en la carpeta font del juego.");
+            Choice(t, cfg, "Letra de los títulos", "Fonts", "Title", "juego", vals.ToArray(), titleNames.ToArray(), null);
+            Help(t, "Tipo de letra de títulos, botones y menús del juego.");
+            Num(t, cfg, "Tamaño de la letra", "Fonts", "Size", Patches.GameFonts.GameSize, Patches.GameFonts.MinSize, Patches.GameFonts.MaxSize, 1, null);
+            Help(t, "Tamaño de todas las letras del juego: 11 es el original. Más grande se lee mejor, pero algunos textos pueden no caber en sus recuadros.");
+        }
         Header(t, "Mapa y estado");
         Bool(t, cfg, "Minimapa siempre visible", "MiniMap", "Enabled", true, v => MiniMap.Enabled = v == "1");
         Help(t, "Muestra un minimapa en la esquina durante la partida, sin abrir el mapa con Tab.");
@@ -130,6 +146,10 @@ internal static unsafe class OptionsMenu
         Help(t, "Un toque corto de Alt deja los nombres del botín fijos; otro toque los quita. Mantener Alt invierte el modo.");
         Choice(t, cfg, "Nombres fijos: mostrar", "Items", "MinQuality", "0", new[] { "0", "1", "2", "3" }, new[] { "Todo", "Desde azules", "Desde amarillos", "Verdes y dorados" }, v => Patches.ItemLabels.MinQuality = int.Parse(v));
         Help(t, "Qué se ve con los nombres fijos. Blanco: normal; azul: mágico; amarillo: raro; verde: set; dorado: único. El oro se ve siempre.");
+        Bool(t, cfg, "Comparar con lo equipado", "Items", "Compare", true, v => ItemCompare.Enabled = v == "1");
+        Help(t, "Al pasar el ratón por un objeto, junto a su ficha se ve la del objeto que llevas equipado en ese hueco.");
+        Bool(t, cfg, "Recoger el oro al pasar", "Items", "AutoGold", true, v => AutoGold.Enabled = v == "1");
+        Help(t, "El oro se recoge solo al pasar a su lado, sin agacharse ni hacer clic. Solo en partida individual: en red el juego no lo permite.");
         Header(t, "Combate");
         Bool(t, cfg, "Lanzar artes con una tecla", "Keys", "QuickCast", true, v => KeyInput.QuickCast = v == "1");
         Help(t, "Las teclas de artes (6 a 0) lanzan el arte al momento, sin tener que seleccionarlo y pulsar el botón derecho.");
@@ -203,8 +223,8 @@ internal static unsafe class OptionsMenu
         if (it.GameVk == MenuKeyId)
         {
             _toggleVk = vk;
-            Config.Set("Menu", "Key", KeyInput.KeyName(vk));
-            Log.Info($"Menú: se abre con {KeyInput.KeyName(vk)}");
+            Config.Set("Menu", "Key", vk == 0 ? "" : KeyInput.KeyName(vk));
+            Log.Info(vk == 0 ? "Menú: sin tecla (solo con los menús del juego)" : $"Menú: se abre con {KeyInput.KeyName(vk)}");
         }
         else if (it.GameVk == AddId)
         {
@@ -353,7 +373,7 @@ internal static unsafe class OptionsMenu
             Kind.Bool => it.Value == "1" ? "Sí" : "No",
             Kind.Action => "Pulsar",
             Kind.Choice => Array.IndexOf(it.Values, it.Value) is int i and >= 0 ? it.Names[i] : it.Value,
-            Kind.Key when it.GameVk == MenuKeyId => KeyInput.KeyName(_toggleVk),
+            Kind.Key when it.GameVk == MenuKeyId => _toggleVk == 0 ? Lang.T("Ninguna") : KeyInput.KeyName(_toggleVk),
             Kind.Key when it.GameVk == AddId => "Pulsa aquí",
             Kind.Key => KeyInput.PhysicalFor(it.GameVk) is uint p && p != 0 ? KeyInput.KeyName(p) : "Ninguna",
             _ => it.Value.Replace('.', ','),
@@ -405,6 +425,13 @@ internal static unsafe class OptionsMenu
             foreach (var b in _batches)
                 fixed (float* p = b.V) Backend.Current.DrawOverlay(b.Tex, p, b.V.Length / 28);
         }
+    }
+
+    /// <summary>Desde el botón «Ancaria Reforged» del menú de Escape (EscMenuButton).</summary>
+    public static void OpenFromGame()
+    {
+        if (!_enabled) return;
+        lock (_lock) { IsOpen = true; _capture = null; if (Items[Sel].Kind == Kind.Header) Move(1); }
     }
 
     /// <summary>El menú en un espacio de iw x ih píxeles: con el libro del juego si están sus texturas; si no, el panel.</summary>
@@ -465,8 +492,9 @@ internal static unsafe class OptionsMenu
         uint red = 0xFF8E1A12, ink = 0xFF2E2416, blue = 0xFF1F2F70, dim = 0xFF6E6250, band = 0x38704818;
         float kt = 30 * s / MenuFont.CellH, k = 17 * s / MenuFont.CellH, ks = 13 * s / MenuFont.CellH;
         // página izquierda: título y secciones
-        string title = "SacredFix";
-        MenuFont.Text(_v, title, bx + (384 * s - MenuFont.Width(title, kt, true)) / 2, by + 32 * s, kt, red, true);
+        string title = "Ancaria Reforged";
+        float ktt = Math.Min(kt, kt * 300 * s / Math.Max(1f, MenuFont.Width(title, kt, true))); // (que quepa en la página)
+        MenuFont.Text(_v, title, bx + (384 * s - MenuFont.Width(title, ktt, true)) / 2, by + 32 * s + (kt - ktt) * MenuFont.CellH / 2, ktt, red, true);
         string sub = "Opciones";
         MenuFont.Text(_v, sub, bx + (384 * s - MenuFont.Width(sub, k)) / 2, by + 72 * s, k, dim);
         MenuFont.Rect(_v, bx + 60 * s, by + 98 * s, 264 * s, 1.5f * s, 0x80704818);
@@ -493,7 +521,7 @@ internal static unsafe class OptionsMenu
             }
         }
         string[] help = _tab == 2
-            ? new[] { "Intro o clic: cambiar la tecla", "Supr: dejar la suya", "Tab: otra sección", "Esc / F10: cerrar" }
+            ? new[] { "Intro o clic: cambiar la tecla", "Supr: dejar la suya", "Tab: otra sección", _toggleVk == 0 ? "Esc: cerrar" : "Esc / " + KeyInput.KeyName(_toggleVk) + ": " + Lang.T("cerrar") }
             : new[] { "Flechas: elegir y cambiar", "Clic: cambiar · rueda: bajar", "Tab: otra sección · Esc: cerrar", "Los cambios se guardan solos" };
         for (int i = 0; i < help.Length; i++) MenuFont.Text(_v, help[i], bx + 66 * s, by + (372 + i * 24) * s, ks * 1.2f, 0xFF4A3C28);
 
@@ -690,7 +718,7 @@ internal static unsafe class OptionsMenu
                                 case 0x2E: case 0x08: // Supr / Retroceso: la tecla de siempre
                                     var ki = Items[Sel];
                                     if (ki.Kind != Kind.Key || ki.GameVk == AddId) break;
-                                    if (ki.GameVk == MenuKeyId) Captured(ki, 0x79);
+                                    if (ki.GameVk == MenuKeyId) Captured(ki, 0); // (sin tecla)
                                     else { Assign(ki, 0); RebuildOther(); }
                                     break;
                                 case 0x1B: IsOpen = false; break;                                   // Esc

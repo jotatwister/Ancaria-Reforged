@@ -39,6 +39,9 @@ internal static unsafe class Overlay
         Cooldowns = cfg.GetBool("Keys", "CooldownSeconds", true);
         HeroInfo = cfg.GetBool("Hud", "HeroInfo", true);
         QuestTracker.Init(cfg);
+        AutoGold.Init(cfg);
+        TrackEnemy.Init(cfg);
+        ItemCompare.Init(cfg);
     }
 
     /// <summary>Desde el menú propio: contador de FPS (sí/no, tamaño).</summary>

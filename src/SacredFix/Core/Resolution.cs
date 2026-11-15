@@ -6,15 +6,16 @@ namespace SacredFix.Core;
 /// <summary>
 /// Tamaño de la imagen del juego ([Display] Width / Height) y compatibilidad con el escalado de Windows.
 /// - Width=auto: el ancho sale de la proporción del monitor principal con 768 de alto (16:9 -> 1366, 16:10 -> 1229,
-///   4:3 -> 1024, 5:4 -> 1024), limitado a 1024-1366: por encima de 1366 de ancho otros proyectos ven cambios de zoom y
-///   parpadeos, así que los ultrapanorámicos se quedan en 1366 con bandas a los lados.
+///   4:3 -> 1024, 5:4 -> 1024, 21:9 -> 1792-1840), limitado a 1024-1840. Probado a 1792: con el parche LayeredTiles
+///   (más baldosas con capas) la hierba de los lados se ve bien. Más ancho (32:9, 2731) se queda en 1840 con bandas:
+///   el juego solo carga 3x3 sectores alrededor de la cámara.
 /// - Escalado de Windows (DPI): el juego no se declara compatible, así que con el escalado al 125-200% (lo normal en
 ///   4K y portátiles) Windows le hace creer que la pantalla es más pequeña y amplía su imagen él mismo, borrosa. Se
 ///   declara compatible por monitor (v2) al cargar la DLL, antes de que el juego cree su ventana.
 /// </summary>
 internal static class Resolution
 {
-    public const int MinWidth = 1024, MaxWidth = 1366;
+    public const int MinWidth = 1024, MaxWidth = 1840;
 
     [DllImport("user32.dll")] private static extern int GetSystemMetrics(int i);
     [DllImport("user32.dll")] private static extern int SetProcessDPIAware();
@@ -27,7 +28,7 @@ internal static class Resolution
 
     public static int Width(Config cfg)
     {
-        string s = cfg.GetString("Display", "Width", "1366").Trim().ToLowerInvariant();
+        string s = cfg.GetString("Display", "Width", "auto").Trim().ToLowerInvariant();
         if (s != "auto") return int.TryParse(s, out int w) ? w : 1366;
         if (_auto != 0) return _auto;
         int sw = GetSystemMetrics(0), sh = GetSystemMetrics(1); // SM_CXSCREEN, SM_CYSCREEN (monitor principal)

@@ -28,6 +28,8 @@ internal static class PatchManager
         new FocusFix(),
         new Widescreen(),
         new ObjectCache(),
+        new LayeredTiles(),
+        new GameFonts(),
         new ItemLabels(),
     };
 

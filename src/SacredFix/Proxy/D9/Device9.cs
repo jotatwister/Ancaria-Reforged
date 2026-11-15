@@ -40,6 +40,7 @@ internal static unsafe class Device9
         try
         {
             if (!Fullscreen) PrepareWindow();
+            else FullscreenSize();
             D3D = Direct3DCreate9(32);
             if (D3D == 0) { Log.Error("D9: Direct3DCreate9 ha fallado"); return false; }
             int* pp = (int*)NativeMemory.AllocZeroed(14 * 4); // se guarda para Reset
@@ -58,11 +59,21 @@ internal static unsafe class Device9
             pp[13] = 1;                 // D3DPRESENT_INTERVAL_ONE (sincronía vertical)
             nint dev = 0;
             // D3DCREATE_FPU_PRESERVE 2 | MULTITHREADED 4 | HARDWARE_VERTEXPROCESSING 0x40
-            int hr = ((delegate* unmanaged[Stdcall]<nint, uint, int, nint, uint, int*, nint*, int>)Layer.Fn(D3D, D3D_CreateDevice))(D3D, 0, 1, Hwnd, 0x46, pp, &dev);
+                        int hr = ((delegate* unmanaged[Stdcall]<nint, uint, int, nint, uint, int*, nint*, int>)Layer.Fn(D3D, D3D_CreateDevice))(D3D, 0, 1, Hwnd, 0x46, pp, &dev);
             if (hr != 0)
             {
                 Log.Warn($"D9: CreateDevice (T&L por hardware) -> 0x{hr:X8}; se prueba por software");
                 hr = ((delegate* unmanaged[Stdcall]<nint, uint, int, nint, uint, int*, nint*, int>)Layer.Fn(D3D, D3D_CreateDevice))(D3D, 0, 1, Hwnd, 0x26, pp, &dev);
+            }
+            if (hr != 0 && Fullscreen)
+            {
+                // la exclusiva no se pudo crear: sin bordes, que no depende de los modos del monitor
+                Log.Warn($"D9: CreateDevice en exclusiva -> 0x{hr:X8}; se usa la pantalla completa sin bordes");
+                Fullscreen = false;
+                PrepareWindow();
+                pp[0] = BBW; pp[1] = BBH; pp[6] = 3; pp[8] = 0 + 1;
+                hr = ((delegate* unmanaged[Stdcall]<nint, uint, int, nint, uint, int*, nint*, int>)Layer.Fn(D3D, D3D_CreateDevice))(D3D, 0, 1, Hwnd, 0x46, pp, &dev);
+                if (hr != 0) hr = ((delegate* unmanaged[Stdcall]<nint, uint, int, nint, uint, int*, nint*, int>)Layer.Fn(D3D, D3D_CreateDevice))(D3D, 0, 1, Hwnd, 0x26, pp, &dev);
             }
             if (hr != 0) { Log.Error($"D9: CreateDevice -> 0x{hr:X8}"); return false; }
             Dev = dev;
@@ -82,6 +93,23 @@ internal static unsafe class Device9
     // Con Direct3D 9 en modo ventana el dispositivo no se pierde con Alt+Tab ni al pinchar en otro monitor. Sin
     // bordes: ventana WS_POPUP del tamaño del monitor (el back buffer, Width x Height, se escala al presentar). Con
     // marco: WS_OVERLAPPEDWINDOW con el área de dibujo de Width x Height, centrada en el monitor.
+    /// <summary>
+    /// Exclusiva: el back buffer mide como el monitor en su modo actual (siempre válido), no como el juego. Con el tamaño
+    /// del juego (p. ej. 1364x768, que no es un modo del monitor) CreateDevice devolvía D3DERR_INVALIDCALL y el juego se
+    /// cerraba; y con un modo real de 1366x768 el monitor cambiaría de resolución y se vería borroso. Así se usa el mismo
+    /// escalado que sin bordes (SceneTex + Catmull-Rom, ratón con MouseScale).
+    /// </summary>
+    private static void FullscreenSize()
+    {
+        if (Hwnd == 0) return;
+        int* mi = stackalloc int[10];
+        mi[0] = 40;
+        nint mon = Win32.MonitorFromWindow(Hwnd, 2 /* MONITOR_DEFAULTTONEAREST */);
+        if (mon == 0 || !Win32.GetMonitorInfoW(mon, mi)) return;
+        BBW = mi[3] - mi[1]; BBH = mi[4] - mi[2];
+        Log.Info($"D9: pantalla completa exclusiva a la resolución del monitor: {BBW}x{BBH}, imagen de {Width}x{Height}");
+    }
+
     public static void PrepareWindow()
     {
         if (Hwnd == 0) return;

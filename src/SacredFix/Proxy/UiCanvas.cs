@@ -277,6 +277,12 @@ internal static unsafe class UiCanvas
     private static uint TipRenderHook(nint self, nint device)
     {
         D9.Overlay.DrawCooldownsInScene(); // (los segundos de recarga, debajo de la ayuda)
+        if (ItemCompare.IsCandidate(self, out int cmpItem))
+        {
+            uint r = _tipRender(self, device);
+            ItemCompare.DrawFor(self, cmpItem, device); // (la ficha del objeto equipado, al lado de la del juego)
+            return r;
+        }
         if (!_mercPopups.Contains(self)) return _tipRender(self, device);
         D3DTrace.BeginOverlay(device);
         try { return _tipRender(self, device); }
@@ -399,7 +405,7 @@ internal static unsafe class UiCanvas
         {
             // Buffs: antes que la interfaz del juego, para que sus ayudas queden encima (sin desplazar: pantalla)
             _depth = 0;
-            if (MiniMap.InGameView()) D9.Overlay.MarkGameUi(); // (nivel y supervivencia: solo en fotogramas de la partida)
+            if (MiniMap.InGameView()) { D9.Overlay.MarkGameUi(); AutoGold.Tick(); TrackEnemy.Tick(); } // (nivel y supervivencia, y el oro: solo en fotogramas de la partida)
             try { MiniMap.DrawBuffs(device); } finally { _depth = 1; }
         }
         try { _uiRender(self, device); }

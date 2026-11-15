@@ -72,7 +72,30 @@ internal static unsafe class MiniMap
             nint win = *(nint*)(mgr + 0x80 + w * 4);
             if (win != 0 && (*(uint*)(win + 0x10) & 1) != 0) return false;
         }
+        if (!tabMapOk && SidePanelOpen()) return false; // (el minimapa taparía la ventana)
         return true;
+    }
+
+    // Ventanas que ocupan la parte izquierda, donde van el minimapa y las misiones: inventario (1), equipo (2),
+    // herrero (3), comerciante (4), estadísticas (8), diario (10), compra (13), maestro (14), cofre (16), caballo (17),
+    // cubo (21) e intercambio (22). (Índices de cUI_Manager.windows[].)
+    private static readonly int[] SidePanels = { 1, 2, 3, 4, 8, 10, 13, 14, 16, 17, 21, 22 };
+
+    /// <summary>¿Hay abierta una ventana de la izquierda (inventario, comerciante, cofre...)?</summary>
+    public static bool SidePanelOpen()
+    {
+        try
+        {
+            nint mgr = *(nint*)0x17EEBBC;
+            if (mgr == 0) return false;
+            foreach (int w in SidePanels)
+            {
+                nint win = *(nint*)(mgr + 0x80 + w * 4);
+                if (win != 0 && (*(uint*)(win + 0x10) & 1) != 0) return true;
+            }
+        }
+        catch { }
+        return false;
     }
 
     // ---- Marco: el de los huecos redondos del arma y del escudo de la barra inferior ----

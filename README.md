@@ -1,11 +1,13 @@
 # Ancaria Reforged
 
-**Versión / Version 0.9.0 (beta)** · **Descarga / Download:** [GitHub](https://github.com/jotatwister/Ancaria-Reforged/releases) · [Nexus Mods](https://www.nexusmods.com/sacred/mods/77)
+**Versión / Version 0.9.1 (beta)** · **Descarga / Download:** [GitHub](https://github.com/jotatwister/Ancaria-Reforged/releases) · [Nexus Mods](https://www.nexusmods.com/sacred/mods/77)
 
 | | |
 |---|---|
-| ![Ciudad a 60 FPS con las misiones activas, el minimapa, el nivel y la supervivencia](screenshots/ciudad-misiones.jpg) | ![Menú F10 en inglés con el estilo del libro del juego](screenshots/menu-f10-ingles.jpg) |
-| Panorámico, minimapa, misiones activas y nivel y supervivencia junto al retrato. *Widescreen, minimap, active quests, level and survival by the portrait.* | Menú F10 con el estilo del libro del juego, aquí en inglés. *F10 menu styled like the game's book, here in English.* |
+| ![Ciudad a 60 FPS con las misiones activas, el minimapa, el nivel y la supervivencia](screenshots/ciudad-misiones.jpg) | ![Menú de opciones en inglés con el estilo del libro del juego](screenshots/menu-f10-ingles.jpg) |
+| Panorámico, minimapa, misiones activas y nivel y supervivencia junto al retrato. *Widescreen, minimap, active quests, level and survival by the portrait.* | Menú de opciones con el estilo del libro del juego, aquí en inglés. *Options menu styled like the game's book, here in English.* |
+| ![Comparar un objeto con el equipado](screenshots/comparar-objetos.jpg) | ![Opción Ancaria Reforged en el menú principal](screenshots/menu-principal.jpg) |
+| Al pasar el ratón por un objeto, al lado sale el que llevas equipado. *Hovering an item shows the one you have equipped next to it.* | El menú se abre desde los propios menús del juego. *The menu opens from the game's own menus.* |
 
 **[Castellano](#castellano)** · **[English](#english)**
 
@@ -21,45 +23,46 @@ mejoras de calidad de vida. Escrito en C# (.NET, NativeAOT).
 
 - **Compatibilidad:** arregla cuelgues y cierres del juego original en Windows modernos (arranque, color de 16 bits,
   modos de vídeo, Alt+Tab, vídeos) y evita que la ventana se minimice al cambiar de programa.
-- **Imagen:** panorámico 1366×768, motor Direct3D 11 propio, dibujo a la resolución del monitor, antialiasing,
-  filtrado anisótropo, luz por píxel, ajuste de color y modos ventana, sin bordes o pantalla completa.
+- **Imagen:** panorámico 16:9 y ultrapanorámico 21:9, motor Direct3D 11 propio, dibujo a la resolución del monitor,
+  antialiasing, filtrado anisótropo, luz por píxel, ajuste de color y modos ventana, sin bordes o pantalla completa.
 - **Interfaz:** minimapa siempre visible, buffos activos con su tiempo junto al retrato, segundos de recarga,
-  nivel y bonus de supervivencia, misiones activas a la izquierda y nombres de objetos fijos con Alt y filtro por
-  calidad.
+  nivel y bonus de supervivencia, misiones activas a la izquierda, nombres de objetos fijos con Alt y filtro por
+  calidad, y comparación de cada objeto con el que llevas equipado.
+- **Comodidad:** el oro se recoge solo al pasar a su lado (en partida individual) y, al atacar a un enemigo, el cursor
+  se queda sobre él.
 - **Autocast:** las teclas de las artes (6 a 0) lanzan el arte al momento hacia el cursor, sin tener que
   seleccionarlo y pulsar el botón derecho. Las teclas del juego se pueden reasignar desde el menú.
-- **Menú propio (F10)** con el aspecto del libro del juego, en castellano o inglés.
+- **Letra a elegir:** cualquier fuente instalada en Windows (o un .ttf/.otf en la carpeta `font` del juego) para los
+  textos y los títulos del juego y del mod, con tamaño de 8 a 14.
+- **Menú propio** con el aspecto del libro del juego, en castellano o inglés. Se abre con la opción
+  **«Ancaria Reforged»** del menú principal o del menú de Escape.
 
 ### Lo que aporta Ancaria Reforged
 
 - **Un motor gráfico nuevo.** El juego usaba DirectDraw y Direct3D 7, de 2004. Ancaria Reforged lo traduce todo a
   Direct3D 11 (con Direct3D 9 de reserva) sin modificar ningún archivo del juego.
-- **Panorámico.** El juego estaba hecho para 1024×768. Ahora se ve a 1366×768, con más mundo a los lados,
-  la interfaz en su sitio y los personajes y objetos bien colocados.
+- **Panorámico y ultrapanorámico.** El juego estaba hecho para 1024×768. Ahora se adapta a la forma de tu pantalla
+  (16:9, 16:10 o 21:9), con más mundo a los lados, la interfaz en su sitio y los personajes y objetos bien colocados.
 - **Más nítido que nunca.** La imagen se dibuja a la resolución de tu monitor (1080p, 1440p, 4K) con antialiasing,
   sin cambiar lo que se ve.
 - **Arreglos de estabilidad.** Cuelgues al arrancar, cierres con Alt+Tab y con los vídeos, el color de
   16 bits en Windows modernos y los bajones de FPS en las ciudades.
 - **Información que el juego no da.** Buffos activos con su tiempo, misiones en pantalla, nivel y bonus de
-  supervivencia, segundos de recarga y filtros del botín por calidad.
-- **Autocast.** Las artes de combate se lanzan con su tecla, sin pasar por el botón derecho.
-- **Todo desde el propio juego.** Un menú (F10) con el estilo del libro del juego, en castellano o inglés, que explica
-  cada opción.
+  supervivencia, segundos de recarga, filtros del botín por calidad y comparación con lo equipado.
+- **Menos clics.** Recogida del oro al pasar, cursor sobre el enemigo atacado y autocast de las artes de combate.
+- **Todo desde el propio juego.** Un menú con el estilo del libro del juego, en castellano o inglés, que explica cada
+  opción, dentro de los menús del juego.
 
 ### Lo que falta
 
 **Por probar**
-- Otros equipos y monitores: 4K con escalado de Windows, 16:10, 4:3 y 120/144 Hz, y Windows 7/8.
-- Monitores ultrapanorámicos (21:9 y más), que ahora se quedan a 1366 de ancho con bandas.
+- Otros equipos y monitores: 4K con escalado de Windows, 16:10, 4:3, 21:9 reales y 120/144 Hz, y Windows 7/8.
+- Partidas en red (cooperativo).
 - Un cuelgue al saltar los vídeos de inicio que se vio dos veces y ya no se reproduce.
 
 **Por crear**
-- Recoger el oro automáticamente.
-- Que el cursor siga al enemigo atacado.
-- Comparar un objeto con el equipado al ver su descripción.
-- Abrir el menú también desde el menú de Escape y desde la pantalla de inicio.
 - Sustituir texturas por versiones mejoradas.
-- Pantalla completa exclusiva con Direct3D 9.
+- Pantallas 32:9 (doble ancho), que ahora se quedan a 1840 de ancho con bandas.
 
 ### Compilar e instalar
 
@@ -83,14 +86,17 @@ Si solo quieres jugar, descarga el mod ya compilado de [GitHub](https://github.c
 Para instalarlo, copia `ddraw.dll` y `src\SacredFix\SacredFix.ini` en la carpeta de Sacred Gold (donde está
 `Sacred.exe`). Para desinstalarlo, borra `ddraw.dll`.
 
-La configuración está en `SacredFix.ini`, junto al juego, y casi toda se cambia en el juego con el menú **F10**.
+La configuración está en `SacredFix.ini`, junto al juego, y casi toda se cambia en el juego desde el menú
+**«Ancaria Reforged»** (menú principal o menú de Escape).
 
 ### Avisos
 
 - Este repositorio **no contiene archivos del juego**. Hace falta una copia legal de Sacred Gold.
 - No tiene relación con los autores ni con los editores de Sacred.
 - Algunas direcciones del parche panorámico se tomaron como datos de
-  [kirides/sacred-bild](https://github.com/kirides/sacred-bild) (GPL-3); no se usa su código.
+  [kirides/sacred-bild](https://github.com/kirides/sacred-bild) (GPL-3), y sus notas, junto con las de
+  [Rampere-98/Sacred-Gold-ModKit](https://github.com/Rampere-98/Sacred-Gold-ModKit), ayudaron con el ultrapanorámico;
+  no se usa su código.
 
 ### Licencia
 
@@ -109,44 +115,48 @@ quality-of-life improvements. Written in C# (.NET, NativeAOT).
 
 - **Compatibility:** fixes hangs and crashes of the original game on modern Windows (startup, 16-bit colour,
   video modes, Alt+Tab, videos) and keeps the window from minimising when you switch apps.
-- **Graphics:** 1366×768 widescreen, custom Direct3D 11 renderer, rendering at your monitor's resolution,
-  antialiasing, anisotropic filtering, per-pixel lighting, colour adjustment and windowed, borderless or
+- **Graphics:** 16:9 widescreen and 21:9 ultrawide, custom Direct3D 11 renderer, rendering at your monitor's
+  resolution, antialiasing, anisotropic filtering, per-pixel lighting, colour adjustment and windowed, borderless or
   fullscreen modes.
 - **Interface:** always-on minimap, active buffs with their remaining time by the portrait, cooldown seconds,
-  level and survival bonus, active quests on the left, and pinned item names with Alt with a quality filter.
+  level and survival bonus, active quests on the left, pinned item names with Alt with a quality filter, and a
+  comparison of every item with the one you have equipped.
+- **Convenience:** gold is picked up just by walking past it (single player), and when you attack an enemy the cursor
+  stays on it.
 - **Autocast:** the art keys (6 to 0) cast the art at once towards the cursor, without selecting it and pressing the
   right button. The game's keys can be rebound from the menu.
-- **In-game menu (F10)** styled like the game's book, in English or Spanish.
+- **Choose your font:** any font installed in Windows (or a .ttf/.otf in the game's `font` folder) for the game's and
+  the mod's texts and titles, with sizes from 8 to 14.
+- **In-game menu** styled like the game's book, in English or Spanish. It opens from the **"Ancaria Reforged"** option
+  of the main menu or the Escape menu.
 
 ### What Ancaria Reforged brings
 
 - **A brand-new renderer.** The game used DirectDraw and Direct3D 7, from 2004. Ancaria Reforged translates everything
   to Direct3D 11 (with Direct3D 9 as a fallback) without modifying any game file.
-- **Widescreen.** The game was made for 1024×768. It now runs at 1366×768, showing more of the world on the
-  sides, with the interface in place and characters and objects correctly positioned.
+- **Widescreen and ultrawide.** The game was made for 1024×768. It now adapts to your screen's shape (16:9, 16:10 or
+  21:9), showing more of the world on the sides, with the interface in place and characters and objects correctly
+  positioned.
 - **Sharper than ever.** The image is rendered at your monitor's resolution (1080p, 1440p, 4K) with antialiasing,
   without changing what you see.
 - **Stability fixes.** Hangs at startup, crashes with Alt+Tab and videos, 16-bit colour on modern Windows
   and FPS drops in towns.
 - **Information the game doesn't give you.** Active buffs with their remaining time, quests on screen, level and
-  survival bonus, cooldown seconds and loot filters by quality.
-- **Autocast.** Combat arts are cast with their key, without going through the right button.
-- **Everything in game.** A menu (F10) styled like the game's book, in English or Spanish, that explains every option.
+  survival bonus, cooldown seconds, loot filters by quality and a comparison with your equipped items.
+- **Fewer clicks.** Gold pickup on the way, the cursor stays on the attacked enemy, and autocast for combat arts.
+- **Everything in game.** A menu styled like the game's book, in English or Spanish, that explains every option,
+  right inside the game's menus.
 
 ### Still to do
 
 **To test**
-- Other PCs and monitors: 4K with Windows scaling, 16:10, 4:3 and 120/144 Hz, and Windows 7/8.
-- Ultrawide monitors (21:9 and wider), which currently stay at 1366 wide with bars.
+- Other PCs and monitors: 4K with Windows scaling, 16:10, 4:3, real 21:9 and 120/144 Hz, and Windows 7/8.
+- Network games (co-op).
 - A hang when skipping the intro videos that happened twice and no longer reproduces.
 
 **To build**
-- Automatic gold pickup.
-- Making the cursor follow the attacked enemy.
-- Comparing an item with the equipped one in its tooltip.
-- Opening the menu from the Escape menu and the title screen too.
 - Replacing textures with improved versions.
-- Exclusive fullscreen with Direct3D 9.
+- 32:9 (double-wide) screens, which currently stay at 1840 wide with bars.
 
 ### Build and install
 
@@ -170,14 +180,17 @@ If you just want to play, download the ready-built mod from [GitHub](https://git
 To install it, copy `ddraw.dll` and `src\SacredFix\SacredFix.ini` into the Sacred Gold folder (where `Sacred.exe`
 is). To uninstall, delete `ddraw.dll`.
 
-Settings live in `SacredFix.ini`, next to the game, and most of them can be changed in game from the **F10** menu.
+Settings live in `SacredFix.ini`, next to the game, and most of them can be changed in game from the
+**"Ancaria Reforged"** menu (main menu or Escape menu).
 
 ### Notes
 
 - This repository **contains no game files**. You need a legal copy of Sacred Gold.
 - Not affiliated with the developers or publishers of Sacred.
 - Some addresses of the widescreen patch were taken as data from
-  [kirides/sacred-bild](https://github.com/kirides/sacred-bild) (GPL-3); none of its code is used.
+  [kirides/sacred-bild](https://github.com/kirides/sacred-bild) (GPL-3), and its notes, together with those of
+  [Rampere-98/Sacred-Gold-ModKit](https://github.com/Rampere-98/Sacred-Gold-ModKit), helped with ultrawide support;
+  none of their code is used.
 
 ### License
 

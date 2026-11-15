@@ -88,8 +88,8 @@ internal static class Lang
         ["Direct3D 11 es el recomendado. Direct3D 9 es una alternativa por si da problemas en tu equipo."] =
             "Direct3D 11 is recommended. Direct3D 9 is a fallback in case it causes problems on your PC.",
         ["Ancho del juego"] = "Game width",
-        ["Anchura de la vista del juego (alto 768). Monitor: según la forma de tu pantalla. 1024 es el original; 1366 es el máximo seguro."] =
-            "Width of the game view (height 768). Monitor: from your screen's shape. 1024 is the original; 1366 is the safe maximum.",
+        ["Anchura de la vista del juego (alto 768). Monitor: según la forma de tu pantalla (hasta 21:9). 1024 es el original."] =
+            "Width of the game view (height 768). Monitor: from your screen's shape (up to 21:9). 1024 is the original.",
         ["Escalado de Windows"] = "Windows scaling",
         ["Ignora el escalado de Windows (125 %, 150 %…) para que el juego no se vea borroso."] =
             "Ignores Windows scaling (125 %, 150 %...) so the game does not look blurry.",
@@ -111,6 +111,20 @@ internal static class Lang
         ["Lista de misiones con su título y el objetivo actual, a la izquierda, debajo del minimapa."] =
             "List of quests with their title and current objective, on the left, below the minimap.",
         ["Fijar con un toque de Alt"] = "Tap Alt to pin",
+        ["Recoger el oro al pasar"] = "Pick up gold on the way",
+        ["Comparar con lo equipado"] = "Compare with equipped",
+        ["Equipado"] = "Equipped",
+        ["Letra del texto"] = "Text font", ["Letra de los títulos"] = "Title font", ["Tamaño de la letra"] = "Font size",
+        ["AntiquaSSK (juego)"] = "AntiquaSSK (game)", ["Carolingia (juego)"] = "Carolingia (game)",
+        ["Tipo de letra de los textos del juego y del mod. Puedes elegir cualquiera instalada en Windows o copiar un .ttf u .otf en la carpeta font del juego."] =
+            "Font for the game's and the mod's texts. Pick any font installed in Windows, or copy a .ttf or .otf file into the game's font folder.",
+        ["Tipo de letra de títulos, botones y menús del juego."] = "Font for the game's titles, buttons and menus.",
+        ["Tamaño de todas las letras del juego: 11 es el original. Más grande se lee mejor, pero algunos textos pueden no caber en sus recuadros."] =
+            "Size of all the game's fonts: 11 is the original. Bigger is easier to read, but some texts may not fit their boxes.",
+        ["Al pasar el ratón por un objeto, junto a su ficha se ve la del objeto que llevas equipado en ese hueco."] =
+            "When you hover over an item, the tooltip of the item you have equipped in that slot is shown next to it.",
+        ["El oro se recoge solo al pasar a su lado, sin agacharse ni hacer clic. Solo en partida individual: en red el juego no lo permite."] =
+            "Gold is picked up just by walking past it, without bending down or clicking. Single player only: the game does not allow it online.",
         ["Un toque corto de Alt deja los nombres del botín fijos; otro toque los quita. Mantener Alt invierte el modo."] =
             "A short tap of Alt pins the loot names; another tap removes them. Holding Alt inverts the mode.",
         ["Nombres fijos: mostrar"] = "Pinned names: show", ["Todo"] = "All", ["Desde azules"] = "Blue and up",
@@ -147,7 +161,7 @@ internal static class Lang
         ["Sí"] = "Yes", ["No"] = "No", ["Pulsar"] = "Press", ["Ninguna"] = "None", ["Pulsa aquí"] = "Click here",
         ["Pulsa una tecla…"] = "Press a key…", ["Pulsa la tecla del juego…"] = "Press the game key…",
         ["Intro o clic: cambiar la tecla"] = "Enter or click: change the key", ["Supr: dejar la suya"] = "Del: restore the default",
-        ["Tab: otra sección"] = "Tab: next section", ["Esc / F10: cerrar"] = "Esc / F10: close",
+        ["Tab: otra sección"] = "Tab: next section", ["Esc: cerrar"] = "Esc: close", ["cerrar"] = "close", ["Ninguna"] = "None",
         ["Flechas: elegir y cambiar"] = "Arrows: choose and change", ["Clic: cambiar · rueda: bajar"] = "Click: change · wheel: scroll",
         ["Tab: otra sección · Esc: cerrar"] = "Tab: next section · Esc: close", ["Los cambios se guardan solos"] = "Changes are saved automatically",
         ["más arriba"] = "more above", ["más opciones abajo"] = "more options below",
