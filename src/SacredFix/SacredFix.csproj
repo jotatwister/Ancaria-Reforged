@@ -1,0 +1,48 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    SacredFix: DLL nativa de 32 bits escrita en C# (NativeAOT).
+    Se publica con el nombre ddraw.dll para que Sacred.exe la cargue desde su carpeta
+    en lugar del ddraw.dll de Windows. Reenvía todas las funciones al ddraw.dll real
+    y aprovecha la primera llamada para aplicar los parches en memoria.
+
+    Compilar:  dotnet publish -c Release, después de compilar native/early.c (pasos en el README)
+    Requisito: Visual Studio 2022 con "Desarrollo para el escritorio con C++" (enlazador x86).
+  -->
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <OutputType>Library</OutputType>
+    <RuntimeIdentifier>win-x86</RuntimeIdentifier>
+    <PublishAot>true</PublishAot>
+    <NativeLib>Shared</NativeLib>
+
+    <!-- El nombre del archivo final: ddraw.dll -->
+    <AssemblyName>ddraw</AssemblyName>
+    <RootNamespace>SacredFix</RootNamespace>
+
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+    <ImplicitUsings>disable</ImplicitUsings>
+
+    <!-- DLL más pequeña: sin datos de globalización ni reflexión innecesaria -->
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <OptimizationPreference>Size</OptimizationPreference>
+    <UseSystemResourceKeys>true</UseSystemResourceKeys>
+    <IlcGenerateStackTraceData>false</IlcGenerateStackTraceData>
+
+    <Version>0.9.0</Version>
+  </PropertyGroup>
+
+  <!-- En la DLL, solo el nombre del archivo de símbolos (ddraw.pdb), sin la carpeta de quien la compila -->
+  <ItemGroup>
+    <LinkerArg Include="/PDBALTPATH:ddraw.pdb" />
+  </ItemGroup>
+
+  <!-- DllMain nativo (native/early.c), compilado a obj/early.obj (build.ps1 o los pasos del README) -->
+  <ItemGroup Condition="Exists('$(MSBuildThisFileDirectory)obj\early.obj')">
+    <NativeLibrary Include="$(MSBuildThisFileDirectory)obj\early.obj" />
+  </ItemGroup>
+
+</Project>

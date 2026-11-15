@@ -1,0 +1,12 @@
+bin/
+obj/
+dist/
+*.user
+.vs/
+__pycache__/
+# nunca: archivos del juego, volcados, configuración con la clave
+*.exe
+*.bin
+Settings.cfg
+SacredFix.log
+SacredFix_cache/
