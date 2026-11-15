@@ -61,8 +61,7 @@ mejoras de calidad de vida. Escrito en C# (.NET, NativeAOT).
 - Un cuelgue al saltar los vídeos de inicio que se vio dos veces y ya no se reproduce.
 
 **Por crear**
-- Sustituir texturas por versiones mejoradas.
-- Pantallas 32:9 (doble ancho), que ahora se quedan a 1840 de ancho con bandas.
+- Que el tamaño de letra elegido también cambie los textos del mod.
 
 ### Compilar e instalar
 
@@ -155,8 +154,7 @@ quality-of-life improvements. Written in C# (.NET, NativeAOT).
 - A hang when skipping the intro videos that happened twice and no longer reproduces.
 
 **To build**
-- Replacing textures with improved versions.
-- 32:9 (double-wide) screens, which currently stay at 1840 wide with bars.
+- Making the chosen font size also apply to the mod's own texts.
 
 ### Build and install
 
