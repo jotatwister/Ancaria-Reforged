@@ -161,7 +161,7 @@ internal static unsafe class ItemCompare
             Log.Info($"Comparar: texto ({len} car., con 0 final: {withNul}): {sb}");
         }
         // el texto del juego lleva códigos: \cAARRGGBB color, \g icono, <A> = 0x0A salto de línea
-        string head = "\\cffe8c878" + D9.Lang.T("Equipado") + (char)10;
+        string head = "\\cffe8c878" + GameText.Get(GameText.Current, D9.Lang.T("Equipado")) + (char)10; // («Current» del juego)
         int total = head.Length + len + 1;
         int cap = Math.Max(total, 0x48);
         ushort* b = (ushort*)((delegate* unmanaged[Cdecl]<nint, nint>)0x849842)(cap * 2);

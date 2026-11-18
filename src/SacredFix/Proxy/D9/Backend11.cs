@@ -622,6 +622,7 @@ float4 main(float4 pos : SV_Position, float4 col : COLOR0, float2 uv : TEXCOORD0
 
     public override void Release(Surface7 s)
     {
+        ReleaseShadow(s);
         if (_dcs.Remove(s, out var d)) { DeleteDC(d.dc); DeleteObject(d.bmp); }
         _locks.Remove(s);
         Layer.ReleaseCom(s.Surf); s.Surf = 0;

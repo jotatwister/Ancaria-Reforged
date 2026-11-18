@@ -29,6 +29,12 @@ internal sealed unsafe partial class Surface7 : IDisposable
     public nint Back, ZBuf;        // superficies enganchadas (nativas)
     public uint Uniq = 1;
     private bool _locked;
+    /// <summary>Atlas de letras del juego (lo marca Patches/FontAtlas): al ampliarse se dibuja con el filtro de letras.</summary>
+    public bool Font;
+    /// <summary>Atlas sombra de las letras (D3D11): textura y vista a la escala de la imagen interna; 0 = no hay.</summary>
+    public nint ShadowTex, ShadowSrv;
+    /// <summary>Superficies bloqueadas ahora mismo (para FontAtlas).</summary>
+    public static readonly System.Collections.Generic.List<Surface7> Locked = new();
 
     private static readonly string[] Names =
     {
@@ -317,6 +323,7 @@ internal sealed unsafe partial class Surface7 : IDisposable
     {
         if (!Backend.Current.Lock(this, rect, flags, out bits, out pitch)) return false;
         _locked = true;
+        Locked.Add(this);
         return true;
     }
 
@@ -324,6 +331,7 @@ internal sealed unsafe partial class Surface7 : IDisposable
     {
         if (!_locked) return;
         _locked = false;
+        Locked.Remove(this);
         Backend.Current.Unlock(this);
     }
 

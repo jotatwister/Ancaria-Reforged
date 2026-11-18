@@ -100,10 +100,12 @@ internal sealed unsafe class GameFonts : IPatch
             bool text = face == GameTextFace, title = face == GameTitleFace;
             if (!text && !title) return _create(lf);
             string nf = text ? TextFace : TitleFace;
-            if (nf.Length == 0 && Size == GameSize) return _create(lf);
+            byte cs = GameLanguage.Charset;
+            if (nf.Length == 0 && Size == GameSize && cs == 0) return _create(lf);
             byte* copy = stackalloc byte[60];
             Buffer.MemoryCopy(lf, copy, 60, 60);
             *(int*)copy = Scale(*(int*)lf);
+            if (cs != 0) copy[23] = cs; // (juego de caracteres del idioma del juego: checo, polaco, ruso...)
             if (nf.Length > 0)
             {
                 byte[] name = System.Text.Encoding.Default.GetBytes(nf);

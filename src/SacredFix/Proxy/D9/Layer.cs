@@ -28,6 +28,8 @@ internal static unsafe class Layer
     public static int Anisotropy { get; private set; } = 16;
     /// <summary>[Display] Sharpen (solo d3d11): enfoque adaptativo (CAS) al presentar, de 0 (nada) a 1.</summary>
     public static float Sharpen { get; set; } = 0.4f;
+    /// <summary>[Display] FontSharp (solo d3d11 con RenderScale): nitidez de las letras del juego ampliadas, 0 (bilineal normal) a 1.</summary>
+    public static float FontSharp { get; set; } = 1f;
     /// <summary>[Display] AlphaToCoverage (solo d3d11, con MSAA): bordes suaves en lo recortado por transparencia.</summary>
     public static bool AlphaToCoverage { get; set; } = true;
     /// <summary>[Display] CloseGaps2D (solo d3d11, con MSAA): ensanchado de las piezas 2D del mundo para tapar las juntas, en píxeles del juego; 0 = no.</summary>
@@ -131,6 +133,8 @@ internal static unsafe class Layer
             System.Globalization.CultureInfo.InvariantCulture, out float cg) ? Math.Clamp(cg, 0f, 2f) : 0f;
         Sharpen = float.TryParse(cfg.GetString("Display", "Sharpen", "0.4").Trim(), System.Globalization.NumberStyles.Float,
             System.Globalization.CultureInfo.InvariantCulture, out float sh) ? Math.Clamp(sh, 0f, 1f) : 0.4f;
+        FontSharp = float.TryParse(cfg.GetString("Display", "FontSharp", "1").Trim(), System.Globalization.NumberStyles.Float,
+            System.Globalization.CultureInfo.InvariantCulture, out float fs) ? Math.Clamp(fs, 0f, 1f) : 1f;
         WindowStyle = w switch { "fullscreen" or "0" => 0, "window" or "2" => 2, _ => 1 };
         if (Enabled && WindowStyle != 0 && cfg.GetBool("Fixes", "KeepWindowOnFocusLoss", true)) KeepWindowOnFocusLoss();
         if (Enabled) Log.Info($"D9: capa propia DirectDraw 7 / Direct3D 7 -> Direct3D 9 activada (MSAA {MultiSample}x)");

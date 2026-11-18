@@ -205,6 +205,37 @@ float4 Smooth2D(Texture2D t, SamplerState s, float2 uv, float4 ub)
 }
 ";
 
+    /// <summary>
+    /// Letras del juego ampliadas: el juego las pinta a su tamaño (1366x768) en un atlas y se amplían x1,4. Con el
+    /// bilineal normal el borde de cada trazo se reparte en varios píxeles (borrosas); aquí se usa un bilineal «nítido»
+    /// en color y alfa: la mezcla entre dos texels ocupa misc.z píxeles de pantalla ([Display] FontSharp: 1 = un píxel,
+    /// el más nítido sin dientes; menos de 1, más suave). Necesita el muestreo lineal (se fuerza para estas texturas).
+    /// </summary>
+    private const string ShFont2D = @"
+float4 Font2D(Texture2D t, SamplerState s, float2 uv, float4 ub)
+{
+    float2 sz; t.GetDimensions(sz.x, sz.y);
+    // la letra no lee fuera de su recuadro del atlas (si no, salen trozos de las vecinas)
+    float2 lo = 0.5 / sz, hi = 1 - 0.5 / sz;
+    if (ub.z >= ub.x && ub.w >= ub.y) { lo = (floor(ub.xy * sz + 0.5) + 0.5) / sz; hi = max(lo, (ceil(ub.zw * sz - 0.5) - 0.5) / sz); }
+    // ampliación real (píxeles de pantalla por texel): x1,4 en la partida; en los menús el juego amplía más sus letras
+    float2 tpp = fwidth(uv * sz);
+    float m = 1 / max(max(tpp.x, tpp.y), 1e-4);
+    if (m < 1.8)
+    {
+        float2 p = uv * sz - 0.5;
+        float2 b = floor(p);
+        float2 f = saturate((p - b - 0.5) * max(m * misc.z, 1) + 0.5);
+        return t.SampleLevel(s, clamp((b + f + 0.5) / sz, lo, hi), 0);
+    }
+    // muy ampliadas: bilineal suave (bordes curvos, sin escalones) y el borde del alfa afinado a ~1 píxel de pantalla
+    float4 c = t.SampleLevel(s, clamp(uv, lo, hi), 0);
+    float k = max(m * misc.z * 0.6, 1);
+    c.a = saturate((c.a - 0.45) * k + 0.5) * saturate(c.a * 4);
+    return c;
+}
+";
+
     private record struct PsKey(ulong S0, ulong S1, ulong S2, ulong S3, uint Flags, uint Lit);
 
     private ulong StageKey(int s, bool smooth2d)
@@ -214,7 +245,8 @@ float4 Smooth2D(Texture2D t, SamplerState s, float2 uv, float4 ub)
         bool tex = _tex[s] != null && _tex[s]!.Surf != 0;
         return cop | (ulong)(_tss[s, 2] & 0x3F) << 5 | (ulong)(_tss[s, 3] & 0x3F) << 11 | (ulong)(_tss[s, 4] & 0x1F) << 17
             | (ulong)(_tss[s, 5] & 0x3F) << 22 | (ulong)(_tss[s, 6] & 0x3F) << 28 | (ulong)(Math.Min(_tss[s, 11] & 0xFFFF, 3)) << 34
-            | (tex ? 1UL : 0) << 36 | (smooth2d && _tss[s, 16] == 1 ? 1UL : 0) << 37 | (smooth2d && _tss[s, 16] == 2 ? 1UL : 0) << 38;
+            | (tex ? 1UL : 0) << 36 | (smooth2d && _tss[s, 16] == 1 ? 1UL : 0) << 37 | (smooth2d && _tss[s, 16] == 2 ? 1UL : 0) << 38
+            | (smooth2d && tex && _tex[s]!.Font && Layer.FontSharp > 0 ? 1UL : 0) << 39;
     }
 
     private PsKey CurrentPsKey(bool is3d, uint vsFlags, uint fvf, bool tri)
@@ -227,7 +259,7 @@ float4 Smooth2D(Texture2D t, SamplerState s, float2 uv, float4 ub)
         // luz por píxel: las opciones de la luz y si el vértice trae color difuso / especular
         uint lit = (vsFlags & PixelLightFlag) != 0 ? (vsFlags & 0x1FFF) | ((fvf & 0x40) != 0 ? 1u << 14 : 0) | ((fvf & 0x80) != 0 ? 1u << 15 : 0) | 1u << 16 : 0;
         // lo 2D ampliado en triángulos: límites de la pieza (geometry shader) para no leer fuera de ella
-        if (!is3d && Scaled && tri && ((s0 | s1 | s2 | s3) & (3UL << 37)) != 0 && _gs != 0) f |= 0x40;
+        if (!is3d && Scaled && tri && ((s0 | s1 | s2 | s3) & (7UL << 37)) != 0 && _gs != 0) f |= 0x40;
         return new PsKey(s0, s1, s2, s3, f, lit);
     }
 
@@ -274,7 +306,7 @@ float4 Smooth2D(Texture2D t, SamplerState s, float2 uv, float4 ub)
         var src = new StringBuilder();
         for (int s = 0; s < 4; s++) src.Append($"Texture2D tx{s} : register(t{s}); SamplerState sm{s} : register(s{s});\n");
         bool ub = (key.Flags & 0x40) != 0;
-        src.Append("cbuffer P : register(b0) { float4 tf; float4 misc; };\n").Append(ub ? GsOut : PsInput).Append(ShSmooth2D);
+        src.Append("cbuffer P : register(b0) { float4 tf; float4 misc; };\n").Append(ub ? GsOut : PsInput).Append(ShSmooth2D).Append(ShFont2D);
         // (las constantes de la luz, en b1; su «misc» pasa a «lmisc», que el PS ya tiene el suyo)
         if (key.Lit != 0) src.Append(VsCb3D.Replace("register(b0)", "register(b1)").Replace("float4 misc;", "float4 lmisc;"));
         src.Append("float4 main(VO i) : SV_Target\n{\n");
@@ -292,7 +324,9 @@ float4 Smooth2D(Texture2D t, SamplerState s, float2 uv, float4 ub)
             ulong k = st[s];
             ulong cop = k & 0x1F, aop = (k >> 17) & 0x1F;
             src.Append("    {\n");
-            if (UsesTexture(k)) src.Append(((k >> 37) & 1) != 0
+            if (UsesTexture(k)) src.Append(((k >> 39) & 1) != 0
+                ? $"        tex = Font2D(tx{s}, sm{s}, i.t{(k >> 34) & 3}.xy, {Ub(ub, k)});\n"
+                : ((k >> 37) & 1) != 0
                 ? $"        tex = Smooth2D(tx{s}, sm{s}, i.t{(k >> 34) & 3}.xy, {Ub(ub, k)});\n"
                 : ((k >> 38) & 1) != 0 ? $"        tex = tx{s}.Sample(sm{s}, Clamp2D(tx{s}, i.t{(k >> 34) & 3}.xy, {Ub(ub, k)}));\n"
                 : $"        tex = tx{s}.Sample(sm{s}, i.t{(k >> 34) & 3}.xy);\n");
@@ -399,9 +433,10 @@ float4 Smooth2D(Texture2D t, SamplerState s, float2 uv, float4 ub)
         return r;
     }
 
-    private nint SamplerState(int s, bool is3d)
+    private nint SamplerState(int s, bool is3d, bool font = false)
     {
         uint u = _tss[s, 13], v = _tss[s, 14], mag = _tss[s, 16], min = _tss[s, 17], mip = _tss[s, 18], an = Math.Clamp(_tss[s, 21], 1, 16);
+        if (font) { mag = 2; min = 2; mip = 1; } // (Font2D necesita el lineal)
         if (u < 1 || u > 4) u = 1;
         if (v < 1 || v > 4) v = 1;
         bool aniso = is3d && Mips;
@@ -478,16 +513,16 @@ float4 Smooth2D(Texture2D t, SamplerState s, float2 uv, float4 ub)
         for (int s = 0; s < 4; s++)
         {
             if (_tss[s, 1] == 1) break;
-            nint srv = _tex[s] is { Surf: not 0 } t ? t.Surf : _whiteSrv;
+            nint srv = _tex[s] is { Surf: not 0 } t ? (t.ShadowSrv != 0 ? t.ShadowSrv : t.Surf) : _whiteSrv;
             if (srv != _curSrv[s]) { ((delegate* unmanaged[Stdcall]<nint, uint, uint, nint*, void>)Fn(_ctx, CtxPSSetSRV))(_ctx, (uint)s, 1, &srv); _curSrv[s] = srv; }
-            nint smp = SamplerState(s, is3d);
+            nint smp = SamplerState(s, is3d, ((s switch { 0 => pk.S0, 1 => pk.S1, 2 => pk.S2, _ => pk.S3 }) >> 39 & 1) != 0);
             if (smp != _curSamp[s]) { ((delegate* unmanaged[Stdcall]<nint, uint, uint, nint*, void>)Fn(_ctx, CtxPSSetSamplers))(_ctx, (uint)s, 1, &smp); _curSamp[s] = smp; }
         }
         // constantes
         UpdateVsConstants();
         uint tf = _rs[60];
         _psCbData[0] = ((tf >> 16) & 0xFF) / 255f; _psCbData[1] = ((tf >> 8) & 0xFF) / 255f; _psCbData[2] = (tf & 0xFF) / 255f; _psCbData[3] = (tf >> 24) / 255f;
-        _psCbData[4] = _rs[24] & 0xFF; _psCbData[5] = Math.Max(Sx, 1f);
+        _psCbData[4] = _rs[24] & 0xFF; _psCbData[5] = Math.Max(Sx, 1f); _psCbData[6] = Layer.FontSharp;
         bool same = true;
         for (int i = 0; i < 8; i++) if (_psCbData[i] != _psCbSent[i]) { same = false; break; }
         if (!same)

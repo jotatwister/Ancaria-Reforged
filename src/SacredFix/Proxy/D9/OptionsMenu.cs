@@ -115,6 +115,18 @@ internal static unsafe class OptionsMenu
         Choice(t, cfg, "Idioma / Language", "Menu", "Language", "es", new[] { "es", "en" }, new[] { "Castellano", "English" }, v => Lang.En = v == "en");
         Help(t, "Idioma de los textos de SacredFix. Los textos del juego (misiones, objetos) siguen el idioma del juego.");
         {
+            var langs = Patches.GameLanguage.Available();
+            var lv = new List<string> { "juego" }; var ln = new List<string> { "Del juego" };
+            foreach (var c in langs) { lv.Add(c); ln.Add($"{Patches.GameLanguage.Names[Array.IndexOf(Patches.GameLanguage.Codes, c)]} ({c})"); }
+            Choice(t, cfg, "Idioma del juego", "Language", "Game", "juego", lv.ToArray(), ln.ToArray(), null);
+            Help(t, "Idioma de los textos del juego (no del mod). Pon el global.res del idioma en scripts/<código> (SP, CZ, DE, PL...) dentro de la carpeta del juego.");
+            var voices = Patches.GameLanguage.AvailableVoices();
+            var vv = new List<string> { "juego" }; var vn = new List<string> { "Del juego" };
+            foreach (var c in voices) { vv.Add(c); vn.Add($"{Patches.GameLanguage.Names[Array.IndexOf(Patches.GameLanguage.Codes, c)]} ({c})"); }
+            Choice(t, cfg, "Voces del juego", "Language", "Voices", "juego", vv.ToArray(), vn.ToArray(), null);
+            Help(t, "Idioma de las voces del juego. Pon el sound.pak del idioma en pak/<código> (SP, DE, IT...) dentro de la carpeta del juego. Se aplica al reiniciar el juego.");
+        }
+        {
             var fam = Patches.GameFonts.Families();
             var vals = new List<string> { "juego" }; vals.AddRange(fam);
             var textNames = new List<string> { "AntiquaSSK (juego)" }; textNames.AddRange(fam);

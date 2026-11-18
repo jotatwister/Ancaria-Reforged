@@ -114,6 +114,10 @@ internal static class Lang
         ["Recoger el oro al pasar"] = "Pick up gold on the way",
         ["Comparar con lo equipado"] = "Compare with equipped",
         ["Equipado"] = "Equipped",
+        ["Idioma del juego"] = "Game language", ["Voces del juego"] = "Game voices",
+        ["Idioma de las voces del juego. Pon el sound.pak del idioma en pak/<código> (SP, DE, IT...) dentro de la carpeta del juego. Se aplica al reiniciar el juego."] = "Language of the game voices. Put that language's sound.pak in pak/<code> (SP, DE, IT...) inside the game folder. Applies after restarting the game.", ["Del juego"] = "Game default",
+        ["Idioma de los textos del juego (no del mod). Pon el global.res del idioma en scripts/<código> (SP, CZ, DE, PL...) dentro de la carpeta del juego."] =
+            "Language of the game's texts (not the mod's). Put that language's global.res in scripts/<code> (SP, CZ, DE, PL...) inside the game folder.",
         ["Letra del texto"] = "Text font", ["Letra de los títulos"] = "Title font", ["Tamaño de la letra"] = "Font size",
         ["AntiquaSSK (juego)"] = "AntiquaSSK (game)", ["Carolingia (juego)"] = "Carolingia (game)",
         ["Tipo de letra de los textos del juego y del mod. Puedes elegir cualquiera instalada en Windows o copiar un .ttf u .otf en la carpeta font del juego."] =

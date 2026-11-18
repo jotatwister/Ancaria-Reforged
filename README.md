@@ -1,13 +1,17 @@
 # Ancaria Reforged
 
-**Versión / Version 0.9.1 (beta)** · **Descarga / Download:** [GitHub](https://github.com/jotatwister/Ancaria-Reforged/releases) · [Nexus Mods](https://www.nexusmods.com/sacred/mods/77)
+**Versión / Version 0.9.2 (beta)** · **Descarga / Download:** [GitHub](https://github.com/jotatwister/Ancaria-Reforged/releases) · [Nexus Mods](https://www.nexusmods.com/sacred/mods/77)
 
 | | |
 |---|---|
-| ![Ciudad a 60 FPS con las misiones activas, el minimapa, el nivel y la supervivencia](screenshots/ciudad-misiones.jpg) | ![Menú de opciones en inglés con el estilo del libro del juego](screenshots/menu-f10-ingles.jpg) |
-| Panorámico, minimapa, misiones activas y nivel y supervivencia junto al retrato. *Widescreen, minimap, active quests, level and survival by the portrait.* | Menú de opciones con el estilo del libro del juego, aquí en inglés. *Options menu styled like the game's book, here in English.* |
-| ![Comparar un objeto con el equipado](screenshots/comparar-objetos.jpg) | ![Opción Ancaria Reforged en el menú principal](screenshots/menu-principal.jpg) |
-| Al pasar el ratón por un objeto, al lado sale el que llevas equipado. *Hovering an item shows the one you have equipped next to it.* | El menú se abre desde los propios menús del juego. *The menu opens from the game's own menus.* |
+| ![Ciudad con las misiones activas, el minimapa, el nivel y la supervivencia](screenshots/ciudad-misiones.jpg) | ![Comparar un objeto con el equipado, con letra nítida](screenshots/comparar-objetos.jpg) |
+| Panorámico, minimapa, misiones activas y nivel y supervivencia junto al retrato. *Widescreen, minimap, active quests, level and survival by the portrait.* | Al pasar el ratón por un objeto, al lado sale el que llevas equipado; letras nítidas a la resolución de la pantalla. *Hovering an item shows the one you have equipped; sharp text at screen resolution.* |
+| ![Menú principal con la opción Ancaria Reforged](screenshots/menu-principal.jpg) | ![Menú de opciones en inglés con el estilo del libro del juego](screenshots/menu-opciones.jpg) |
+| El menú del mod se abre desde los propios menús del juego. *The mod menu opens from the game's own menus.* | Menú de opciones con el estilo del libro del juego, aquí en inglés. *Options menu styled like the game's book, here in English.* |
+| ![Selección de personaje a pantalla completa](screenshots/seleccion-personaje.jpg) | ![Underworld con el minimapa y la misión activa](screenshots/underworld.jpg) |
+| Selección de personaje a pantalla completa. *Full-screen character selection.* | Underworld en panorámico. *Underworld in widescreen.* |
+| ![Menú principal con los textos en checo](screenshots/idioma-checo.jpg) | |
+| Textos del juego en otro idioma (aquí checo) con el global.res de cada versión. *Game texts in another language (here Czech) using each version's global.res.* | |
 
 **[Castellano](#castellano)** · **[English](#english)**
 
@@ -33,7 +37,11 @@ mejoras de calidad de vida. Escrito en C# (.NET, NativeAOT).
 - **Autocast:** las teclas de las artes (6 a 0) lanzan el arte al momento hacia el cursor, sin tener que
   seleccionarlo y pulsar el botón derecho. Las teclas del juego se pueden reasignar desde el menú.
 - **Letra a elegir:** cualquier fuente instalada en Windows (o un .ttf/.otf en la carpeta `font` del juego) para los
-  textos y los títulos del juego y del mod, con tamaño de 8 a 14.
+  textos y los títulos del juego y del mod, con tamaño de 8 a 14. Las letras del juego se pintan a la resolución de la
+  pantalla, nítidas también en los menús.
+- **Idiomas:** los textos y las voces del juego en otro idioma (castellano, alemán, checo, polaco…) usando los archivos
+  de esa versión del juego: su `global.res` en `scripts\<código>` y su `sound.pak` en `pak\<código>`. Se eligen por
+  separado en el menú. El mod no reparte ningún archivo del juego.
 - **Menú propio** con el aspecto del libro del juego, en castellano o inglés. Se abre con la opción
   **«Ancaria Reforged»** del menú principal o del menú de Escape.
 
@@ -43,8 +51,10 @@ mejoras de calidad de vida. Escrito en C# (.NET, NativeAOT).
   Direct3D 11 (con Direct3D 9 de reserva) sin modificar ningún archivo del juego.
 - **Panorámico y ultrapanorámico.** El juego estaba hecho para 1024×768. Ahora se adapta a la forma de tu pantalla
   (16:9, 16:10 o 21:9), con más mundo a los lados, la interfaz en su sitio y los personajes y objetos bien colocados.
-- **Más nítido que nunca.** La imagen se dibuja a la resolución de tu monitor (1080p, 1440p, 4K) con antialiasing,
-  sin cambiar lo que se ve.
+- **Más nítido que nunca.** La imagen y las letras se dibujan a la resolución de tu monitor (1080p, 1440p, 4K) con
+  antialiasing, sin cambiar lo que se ve.
+- **Tu idioma.** La versión de Steam y GOG solo trae el inglés; con los archivos de otra versión, textos y voces en tu
+  idioma.
 - **Arreglos de estabilidad.** Cuelgues al arrancar, cierres con Alt+Tab y con los vídeos, el color de
   16 bits en Windows modernos y los bajones de FPS en las ciudades.
 - **Información que el juego no da.** Buffos activos con su tiempo, misiones en pantalla, nivel y bonus de
@@ -125,7 +135,11 @@ quality-of-life improvements. Written in C# (.NET, NativeAOT).
 - **Autocast:** the art keys (6 to 0) cast the art at once towards the cursor, without selecting it and pressing the
   right button. The game's keys can be rebound from the menu.
 - **Choose your font:** any font installed in Windows (or a .ttf/.otf in the game's `font` folder) for the game's and
-  the mod's texts and titles, with sizes from 8 to 14.
+  the mod's texts and titles, with sizes from 8 to 14. The game's letters are drawn at your screen's resolution,
+  sharp in the menus too.
+- **Languages:** the game's texts and voices in another language (Spanish, German, Czech, Polish…) using the files of
+  that version of the game: its `global.res` in `scripts\<code>` and its `sound.pak` in `pak\<code>`. Chosen
+  separately in the menu. The mod does not ship any game file.
 - **In-game menu** styled like the game's book, in English or Spanish. It opens from the **"Ancaria Reforged"** option
   of the main menu or the Escape menu.
 
@@ -136,8 +150,10 @@ quality-of-life improvements. Written in C# (.NET, NativeAOT).
 - **Widescreen and ultrawide.** The game was made for 1024×768. It now adapts to your screen's shape (16:9, 16:10 or
   21:9), showing more of the world on the sides, with the interface in place and characters and objects correctly
   positioned.
-- **Sharper than ever.** The image is rendered at your monitor's resolution (1080p, 1440p, 4K) with antialiasing,
-  without changing what you see.
+- **Sharper than ever.** The image and the text are rendered at your monitor's resolution (1080p, 1440p, 4K) with
+  antialiasing, without changing what you see.
+- **Your language.** The Steam and GOG version only ships English; with the files of another version, texts and voices
+  in your language.
 - **Stability fixes.** Hangs at startup, crashes with Alt+Tab and videos, 16-bit colour on modern Windows
   and FPS drops in towns.
 - **Information the game doesn't give you.** Active buffs with their remaining time, quests on screen, level and

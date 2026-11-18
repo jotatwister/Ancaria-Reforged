@@ -10,14 +10,31 @@ namespace SacredFix.Proxy.D9;
 /// La fuente: al empezar se dibujan con GDI los caracteres necesarios en una textura de 256x32 (blanco con el alfa de
 /// la letra) y luego cada carácter es un cuadrado con su trozo de textura. Lleva una sombra para leerse en cualquier fondo.
 /// </summary>
-internal static unsafe class Overlay
+internal static unsafe partial class Overlay
 {
     public static bool Enabled { get; private set; }
     public static bool Cooldowns { get; private set; }
     public static bool HeroInfo { get; private set; }
     public static bool Any => Enabled || Cooldowns || HeroInfo;
     private static int _x = 150, _y = 6, _size = 16;
-    private const string Chars = "0123456789 FPSms.%NivelupracnL";
+    // todos los caracteres latinos (ASCII, Latin-1 y Latin Extended-A: también č, ř, š, ž...) para los textos del juego
+    private static readonly string Chars = BuildChars();
+    private static string BuildChars()
+    {
+        var sb = new System.Text.StringBuilder();
+        for (int c = 32; c < 127; c++) sb.Append((char)c);
+        for (int c = 0xA1; c < 0x180; c++) sb.Append((char)c);
+        return sb.ToString();
+    }
+    private static readonly System.Collections.Generic.Dictionary<char, int> _ix = BuildIndex();
+    private static System.Collections.Generic.Dictionary<char, int> BuildIndex()
+    {
+        var d = new System.Collections.Generic.Dictionary<char, int>();
+        for (int i = 0; i < Chars.Length; i++) d[Chars[i]] = i;
+        return d;
+    }
+    private const int AtlasW = 512, AtlasH = 512, RowH = 36;
+    private static readonly float[] _v0 = new float[Chars.Length];
     private static nint _font;          // IDirect3DTexture9
     private static readonly float[] _u0 = new float[Chars.Length], _u1 = new float[Chars.Length];
     private static readonly int[] _adv = new int[Chars.Length];
@@ -89,7 +106,7 @@ internal static unsafe class Overlay
         if (_font != 0) return true;
         if (_failed) return false;
         _failed = true;
-        const int W = 512, H = 32;
+        const int W = AtlasW, H = AtlasH;
         nint dc = CreateCompatibleDC(0);
         int* bmi = stackalloc int[10];
         new Span<int>(bmi, 10).Clear();
@@ -102,16 +119,19 @@ internal static unsafe class Overlay
         nint oldFont = SelectObject(dc, font);
         SetTextColor(dc, 0xFFFFFF);
         SetBkMode(dc, 1 /* TRANSPARENT */);
-        int x = 1;
+        int x = 1, row = 0;
         int* sz = stackalloc int[2];
         for (int i = 0; i < Chars.Length; i++)
         {
             string c = Chars[i].ToString();
             GetTextExtentPoint32W(dc, c, 1, sz);
-            TextOutW(dc, x, 1, c, 1);
-            _u0[i] = x / (float)W; _u1[i] = (x + sz[0]) / (float)W;
+            if (x + sz[0] + 2 > W - 6) { x = 1; row++; } // (la esquina superior derecha es el trozo blanco)
+            int top = row * RowH;
+            if (top + RowH > H) break;
+            TextOutW(dc, x, top + 1, c, 1);
+            _u0[i] = x / (float)W; _u1[i] = (x + sz[0]) / (float)W; _v0[i] = top / (float)H;
             _adv[i] = sz[0];
-            _cellH = Math.Max(_cellH, sz[1]);
+            _cellH = Math.Max(_cellH, Math.Min(sz[1], RowH - 2));
             x += sz[0] + 2;
         }
         // a una textura del motor: blanco, con el alfa del brillo de la letra
@@ -148,10 +168,10 @@ internal static unsafe class Overlay
         float shadow = Math.Max(1f, 1.5f * sy);
         if (Enabled && _text.Length > 0)
         {
-            float k = _size * sy / _cellH;       // de píxeles de la fuente a píxeles de la pantalla
+            float cell = _size * sy, sh = MathF.Max(1f, MathF.Round(shadow));
             float x0 = _x * sx, y0 = _y * sy;
-            DrawText(0, _text, x0 + shadow, y0 + shadow, k, 0xC0000000);
-            DrawText(0, _text, x0, y0, k, 0xFFFFE066); // amarillo claro
+            SharpText(_text, x0 + sh, y0 + sh, cell, 0xC0000000);
+            SharpText(_text, x0, y0, cell, 0xFFFFE066); // amarillo claro
         }
         if (!hudDone)
         {
@@ -159,6 +179,7 @@ internal static unsafe class Overlay
             if (HeroInfo && gameUi) AddHeroInfo(sx, sy, shadow);
         }
         if (_nq > 0) fixed (float* v = _verts) Backend.Current.DrawOverlay(_font, v, _nq);
+        FlushSharp(false);
     }
 
     private static bool _cdInScene; // segundos de recarga ya dibujados dentro de la escena en este fotograma
@@ -179,8 +200,11 @@ internal static unsafe class Overlay
         _nq = 0;
         AddCooldowns(nCd, sx, sy, Math.Max(1f, 1.5f * sy));
         if (HeroInfo && _gameUi) AddHeroInfo(sx, sy, Math.Max(1f, 1.5f * sy));
-        if (_nq == 0) { _cdInScene = true; return; }
-        fixed (float* v = _verts) _cdInScene = Backend.Current.DrawOverlayInScene(_font, v, _nq);
+        if (_nq == 0 && !SharpPending()) { _cdInScene = true; return; }
+        bool ok = true;
+        if (_nq > 0) fixed (float* v = _verts) ok = Backend.Current.DrawOverlayInScene(_font, v, _nq);
+        ok &= FlushSharp(true);
+        _cdInScene = ok;
         _nq = 0;
     }
 
@@ -217,14 +241,15 @@ internal static unsafe class Overlay
                         surv += 10f * (*(int*)0x182EE44 switch { 1 => 1.34f, 2 => 1.67f, 3 => 2f, 4 => 2.34f, _ => 1f });
                 }
             }
-            string l1 = $"{Lang.T("Nivel")} {lvl}", l2 = $"{Lang.T("Supervivencia")} {(int)surv}%";
-            float k = 13 * sy / _cellH, lh = 16 * sy;
+            // textos del propio juego (global.res): salen en su idioma y con sus traducciones
+            string l1 = $"{GameText.Get(GameText.Level, Lang.T("Nivel"))} {lvl}", l2 = $"{GameText.Get(GameText.SurvivalBonus, Lang.T("Supervivencia"))} {(int)surv}%";
+            float cell = 13 * sy, lh = 16 * sy, sh = MathF.Max(1f, MathF.Round(shadow));
             float right = (Display.Width - 100) * sx, y = (14 + 32 + 6) * sy;
             foreach (var (t, yy) in new[] { (l1, y), (l2, y + lh) })
             {
-                float x = right - TextWidth(t, k);
-                DrawText(0, t, x + shadow, yy + shadow, k, 0xD0000000);
-                DrawText(0, t, x, yy, k, 0xFFF0E0B0);
+                float x = right - SharpWidth(t, cell);
+                SharpText(t, x + sh, yy + sh, cell, 0xD0000000);
+                SharpText(t, x, yy, cell, 0xFFF0E0B0);
             }
         }
         catch { }
@@ -234,7 +259,7 @@ internal static unsafe class Overlay
     private static void Rect(float x0, float y0, float x1, float y1, uint color)
     {
         if ((_nq + 1) * 28 > _verts.Length) Array.Resize(ref _verts, _verts.Length * 2);
-        const float u = 510f / 512f, t = 2f / 32f;
+        const float u = (AtlasW - 2f) / AtlasW, t = 2f / AtlasH;
         fixed (float* v = &_verts[_nq * 28])
         {
             Quad(v, 0, x0, y0, u, t, color);
@@ -250,21 +275,21 @@ internal static unsafe class Overlay
         for (int i = 0; i < nCd; i++)
         {
             // centrado en la casilla (coordenadas del lienzo de 1024 -> pantalla)
-            float k = _cdH[i] * 0.42f * sy / _cellH;
-            float w = TextWidth(_cdText[i], k);
+            float cell = _cdH[i] * 0.42f * sy, sh = MathF.Max(1f, MathF.Round(shadow));
+            float w = SharpWidth(_cdText[i], cell);
             float cx = (_cdX[i] + UiCanvas.Left) * sx, cy = _cdY[i] * sy;
-            float x0 = cx - w / 2, y0 = cy - _cellH * k / 2;
+            float x0 = cx - w / 2, y0 = cy - SharpCell(cell) / 2;
             for (int dx = -1; dx <= 1; dx++)
                 for (int dy = -1; dy <= 1; dy++)
-                    if (dx != 0 || dy != 0) DrawText(0, _cdText[i], x0 + dx * shadow, y0 + dy * shadow, k, 0xE0000000);
-            DrawText(0, _cdText[i], x0, y0, k, 0xFFFFFFFF);
+                    if (dx != 0 || dy != 0) SharpText(_cdText[i], x0 + dx * sh, y0 + dy * sh, cell, 0xE0000000);
+            SharpText(_cdText[i], x0, y0, cell, 0xFFFFFFFF);
         }
     }
 
     private static float TextWidth(string s, float k)
     {
         float w = 0;
-        foreach (char ch in s) { int i = Chars.IndexOf(ch); if (i >= 0) w += (_adv[i] + 2) * k; }
+        foreach (char ch in s) if (_ix.TryGetValue(ch, out int i)) w += (_adv[i] + 2) * k;
         return Math.Max(0, w - 2 * k);
     }
 
@@ -277,17 +302,16 @@ internal static unsafe class Overlay
         float h = _cellH * k;
         foreach (char ch in text)
         {
-            int i = Chars.IndexOf(ch);
-            if (i < 0) continue;
+            if (!_ix.TryGetValue(ch, out int i)) continue;
             float w = _adv[i] * k;
             if (ch != ' ')
             {
-                float v1 = (_cellH + 1) / 32f;
+                float v0 = _v0[i] + 1f / AtlasH, v1 = _v0[i] + (_cellH + 1f) / AtlasH;
                 if ((_nq + 1) * 28 > _verts.Length) Array.Resize(ref _verts, _verts.Length * 2);
                 fixed (float* v = &_verts[_nq * 28])
                 {
-                    Quad(v, 0, x - 0.5f, y - 0.5f, _u0[i], 1 / 32f, color);
-                    Quad(v, 1, x + w - 0.5f, y - 0.5f, _u1[i], 1 / 32f, color);
+                    Quad(v, 0, x - 0.5f, y - 0.5f, _u0[i], v0, color);
+                    Quad(v, 1, x + w - 0.5f, y - 0.5f, _u1[i], v0, color);
                     Quad(v, 2, x - 0.5f, y + h - 0.5f, _u0[i], v1, color);
                     Quad(v, 3, x + w - 0.5f, y + h - 0.5f, _u1[i], v1, color);
                 }

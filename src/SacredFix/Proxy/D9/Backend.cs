@@ -60,6 +60,11 @@ internal abstract unsafe class Backend
 
     // ---- superposición (contador de FPS, segundos de recarga) ----
     public abstract nint CreateRgbaTexture(int w, int h, uint* pixels);
+
+    // ---- atlas «sombra» de las letras del juego (solo D3D11 con imagen interna ampliada) ----
+    public virtual bool ShadowsOn => false;
+    /// <summary>El juego ha copiado una letra a su atlas: (dx, dy, w, h) en el atlas; (ox, oy) origen del texto en el atlas.</summary>
+    public virtual void FontGlyph(Surface7 atlas, int dx, int dy, int w, int h, char ch, nint font, int ox, int oy, bool known) { }
     /// <summary>Cuadrados texturizados sobre la imagen final, en píxeles de pantalla: 4 vértices por cuadrado (tira),
     /// 7 floats cada uno (x, y, z, rhw, color, u, v).</summary>
     public abstract void DrawOverlay(nint tex, float* verts, int quads);
