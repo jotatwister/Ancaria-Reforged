@@ -25,6 +25,8 @@ internal static unsafe class TrackEnemy
     private static int _errors, _logs, _optFrames;
     private static bool _opt;
     private static int _lastTarget;
+    private static int _setX = int.MinValue, _setY, _gap;
+    private static bool _userMoved;
 
     [DllImport("user32.dll")] private static extern int ClientToScreen(nint hwnd, int* pt);
 
@@ -49,13 +51,32 @@ internal static unsafe class TrackEnemy
             nint hero = ((delegate* unmanaged[Thiscall]<nint, nint>)0x603E30)(om);
             if (hero == 0) { _lastTarget = 0; return; }
             ushort fc = *(ushort*)(hero + 0xFC), st = *(ushort*)(hero + 0x150);
-            int id = fc is 4 or 8 ? *(int*)(hero + 0x104) : fc is 6 or 0xB ? *(int*)(hero + 0x158) : 0;
-            if (id == 0 || st != 1) { _lastTarget = 0; return; }
+            // como el juego (0x610638): fc 4/8 -> +0x104; fc 6/0xB o subestado 3/5 -> +0x158
+            int id = fc is 4 or 8 ? *(int*)(hero + 0x104) : (fc is 6 or 0xB || st is 3 or 5) ? *(int*)(hero + 0x158) : 0;
+            // st 1 = yendo hacia el objetivo; con arma a distancia (o ya al lado) el héroe ataca sin moverse (estado 4 u 8 con
+            // st 0): también se sigue, salvo que el jugador haya movido el ratón por su cuenta (ver _userMoved)
+            bool attacking = (st == 0 && fc is 4 or 8) || st is 3 or 5;
+            if (id == 0 || (st != 1 && !attacking))
+            {
+                // entre disparo y disparo (recarga) el héroe pasa un momento por otros estados: se mantiene el objetivo
+                if (_lastTarget == 0 || ++_gap > 30) { _lastTarget = 0; return; }
+                id = _lastTarget;
+            }
+            else _gap = 0;
 
             nint obj = ((delegate* unmanaged[Thiscall]<nint, int, nint>)0x5FE000)(om, id);
             if (obj == 0) return;
             var cast = (delegate* unmanaged[Cdecl]<nint, int, nint, nint, int, nint>)0x84A961;
             if (cast(obj, 0, 0x8EB648, 0x8EB660, 0) == 0) return; // solo criaturas (no objetos del suelo)
+            // los caballos no: al ir a montar, el héroe también lo tiene de objetivo, y con el cursor encima en cada
+            // fotograma no llegaba a montar (y la imagen parpadeaba). ¿Es caballo?: 0x4266F0 (thiscall [0xAAB5E4],
+            // tipo +0x10), la misma comprobación con la que el juego elige el cursor de montar (0x611FEC).
+            nint types = *(nint*)0xAAB5E4;
+            if (types != 0 && ((delegate* unmanaged[Thiscall]<nint, int, byte>)0x4266F0)(types, *(int*)(obj + 0x10)) != 0)
+            {
+                if (id != _lastTarget && _logs++ < 12) Log.Info($"TrackEnemy: objetivo {id} es un caballo (estado {fc}): no se toca el cursor");
+                _lastTarget = id; return;
+            }
 
             nint eng = ((delegate* unmanaged[Cdecl]<int, nint>)0x60D6C0)(-1);
             if (eng == 0) return;
@@ -84,6 +105,7 @@ internal static unsafe class TrackEnemy
             {
                 // primer fotograma con este objetivo: el cursor acaba de hacer clic sobre él (sirve de calibración)
                 _lastTarget = id;
+                _userMoved = false; _setX = int.MinValue;
                 if (_logs++ < 12)
                 {
                     int alt = *(int*)0xAD7998, altY = *(int*)0xAD799C;
@@ -94,8 +116,12 @@ internal static unsafe class TrackEnemy
             }
             if (gx < 0 || gy < 0 || gx >= Display.Width || gy >= Display.Height) return;
             int tx = (int)MathF.Round(gx), ty = (int)MathF.Round(gy);
-            if (tx == curX && ty == curY) return;
+            // si el cursor ya no está donde lo dejamos, el jugador lo ha movido (para apuntar a otro sitio): se respeta
+            if (_setX != int.MinValue && (Math.Abs(curX - _setX) > 3 || Math.Abs(curY - _setY) > 3)) _userMoved = true;
+            if (_userMoved) return;
+            if (tx == curX && ty == curY) { _setX = curX; _setY = curY; return; }
             ((delegate* unmanaged[Stdcall]<int, int, int>)*(nint*)0x8902B4)(o[0] + tx, o[1] + ty);
+            _setX = tx; _setY = ty;
         }
         catch (Exception ex) { if (_errors++ < 3) Log.Error("TrackEnemy: " + ex.Message); }
     }

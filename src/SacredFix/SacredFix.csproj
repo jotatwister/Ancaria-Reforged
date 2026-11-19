@@ -32,7 +32,7 @@
     <UseSystemResourceKeys>true</UseSystemResourceKeys>
     <IlcGenerateStackTraceData>false</IlcGenerateStackTraceData>
 
-    <Version>0.9.2</Version>
+    <Version>0.9.3</Version>
   </PropertyGroup>
 
   <!-- En la DLL, solo el nombre del archivo de símbolos (ddraw.pdb), sin la carpeta de quien la compila -->

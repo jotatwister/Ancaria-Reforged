@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using SacredFix.Core;
+using SacredFix.Proxy.D9;
 
 namespace SacredFix.Patches;
 
@@ -431,22 +432,45 @@ internal sealed class Widescreen : IPatch
         if (groups.Contains(9)) all.AddRange(Group9);
         // 10 = 14 + 15. 14: proyección del dibujado del mundo (0x624E30) y de la cámara (0x628130);
         // 15: las del cambio de zoom (0x628310) y la carga (0x6288F0). Separados para la bisección.
+        // 14 = 141 (proyección del mundo, 0x624F21/2F) + 142 (cámara, 0x62829B/A9) + 143 (visibilidad, 0x44CF20)
         bool g14 = groups.Contains(10) || groups.Contains(14), g15 = groups.Contains(10) || groups.Contains(15);
-        if (g14 || g15)
+        bool g141 = g14 || groups.Contains(141), g142 = g14 || groups.Contains(142), g143 = g14 || groups.Contains(143);
+        if (!g14 && (g141 || g142)) g14 = true; // (el grupo 8 y el bucle de abajo)
+        // Con nuestra capa D3D la proyección del mundo se ensancha al dibujar (Device7.WidenProjection) y el juego sigue
+        // leyendo y calculando con la de 4:3: no se tocan sus proyecciones (grupos 10 y 16) ni hace falta la copia de
+        // visibilidad (0x44CF20 ya sale bien con la original). Igual que sacred-bild, que no ensancha la del juego.
+        // ([Debug] LayerProjection=0 vuelve al sistema anterior: proyección ensanchada en el código del juego, grupos 10 y 16;
+        // con él no se puede montar a caballo. Sin nuestra capa, Renderer=ddraw, también se usa el anterior.)
+        bool layerProj = Layer.Enabled && cfg.GetBool("Debug", "LayerProjection", true)
+                         && (g14 || g15 || groups.Contains(16) || groups.Contains(161) || groups.Contains(162));
+        if (layerProj)
+        {
+            Device7.WidenProjection = true;
+            // El ojo de la cámara 3D (0x6284E0): X = 2·px / (ancho · PROJ[0][0] · zoom). Con la proyección de 4:3 que lee
+            // el juego, el ancho tiene que ser el de 1024 (como en el original; sacred-bild igual): 0x6285A2
+            // «mov cx, [eax+0x20]» -> «mov cx, 0x400». (La otra lectura, 0x6287D9, ya la compensa 0x6287FE del grupo 18.)
+            if (!Mem.Matches(CamWidthReads[0], CamWidthOrig))
+                throw new InvalidOperationException($"cámara: bytes inesperados en 0x{CamWidthReads[0]:X8}: {Mem.Hex(CamWidthReads[0], 4)}");
+            Mem.WriteBytes(CamWidthReads[0], CamWidthNew);
+            if (!groups.Contains(8)) { groups.Add(8); all.AddRange(Group8); }
+            Log.Info($"[{Name}] proyección del mundo ensanchada en la capa D3D (el juego lee la de 4:3)");
+        }
+        if ((g14 || g15) && !layerProj)
         {
             if (!groups.Contains(8)) { groups.Add(8); all.AddRange(Group8); Log.Info($"[{Name}] la proyección ancha necesita el grupo 8: se añade"); }
             foreach (var e in Group10)
             {
                 bool first = e.instr < 0x628300; // 0x624F21/2F y 0x62829B/A9
-                if (first ? g14 : g15) all.Add(e);
+                if (first ? (e.instr < 0x625000 ? g141 : g142) : g15) all.Add(e);
             }
         }
         if (groups.Contains(12)) all.AddRange(Group12);
         if (groups.Contains(13)) all.AddRange(Group13);
         if (groups.Contains(18)) all.AddRange(Group18);
         // 16 = 161 (proyección de D3D de 0x60C14D/0x60D950) + 162 (matrices secundarias de las 4 del grupo 10)
-        foreach (var e in Group16)
-            if (groups.Contains(16) || groups.Contains(e.instr < 0x610000 ? 161 : 162)) all.Add(e);
+        if (!layerProj)
+            foreach (var e in Group16)
+                if (groups.Contains(16) || groups.Contains(e.instr < 0x610000 ? 161 : 162)) all.Add(e);
         if (groups.Contains(11))
         {
             foreach (var at in CamWidthReads)
@@ -483,7 +507,14 @@ internal sealed class Widescreen : IPatch
             Log.Info($"[{Name}]   0x{instr:X8} {what}: {orig} -> {value}");
             changed++;
         }
-        if (groups.Contains(10) || groups.Contains(14)) { InstallVisibilityScale(); changed += 2; }
+        // (prueba descartada: leer la proyección como 4:3 corta el bucle del caballo, pero descoloca la cámara y oculta los personajes)
+        if (!layerProj && (groups.Contains(10) || groups.Contains(14) || groups.Contains(143))) { InstallVisibilityScale(); changed += 2; }
+        // prueba (caballo): sin el seguimiento suave de la cámara de 0x6103F0 (el «jg» de 0x610473 pasa a «jmp»)
+        if (cfg.GetBool("Debug", "NoCamFollow", false) && Mem.Matches(0x610473, new byte[] { 0x7F, 0x2D }))
+        {
+            Mem.WriteBytes(0x610473, new byte[] { 0xEB, 0x2D });
+            Log.Info($"[{Name}] prueba: seguimiento suave de la cámara (0x610473) desactivado");
+        }
         if (groups.Contains(17)) { InstallCameraCenter(); changed += 3; }
         if (groups.Contains(11))
             foreach (var at in CamWidthReads)

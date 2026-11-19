@@ -144,5 +144,5 @@ internal static unsafe class DDrawExports
     // ---- Propia: permite a los scripts reconocer que la ddraw.dll instalada es SacredFix ----
 
     [UnmanagedCallersOnly(EntryPoint = "SacredFix_Version", CallConvs = new[] { typeof(CallConvStdcall) })]
-    public static int SacredFixVersion() => 0x000902; // 0.9.2
+    public static int SacredFixVersion() => 0x000903; // 0.9.3
 }

@@ -405,7 +405,7 @@ internal static unsafe class UiCanvas
         {
             // Buffs: antes que la interfaz del juego, para que sus ayudas queden encima (sin desplazar: pantalla)
             _depth = 0;
-            if (MiniMap.InGameView()) { D9.Overlay.MarkGameUi(); AutoGold.Tick(); TrackEnemy.Tick(); } // (nivel y supervivencia, y el oro: solo en fotogramas de la partida)
+            if (MiniMap.InGameView()) { D9.Overlay.MarkGameUi(); AutoGold.Tick(); TrackEnemy.Tick(); HeroWatch.Tick(); } // (nivel y supervivencia, y el oro: solo en fotogramas de la partida)
             try { MiniMap.DrawBuffs(device); } finally { _depth = 1; }
         }
         try { _uiRender(self, device); }

@@ -1,6 +1,6 @@
 # Ancaria Reforged
 
-**Versión / Version 0.9.2 (beta)** · **Descarga / Download:** [GitHub](https://github.com/jotatwister/Ancaria-Reforged/releases) · [Nexus Mods](https://www.nexusmods.com/sacred/mods/77)
+**Versión / Version 0.9.3 (beta)** · **Descarga / Download:** [GitHub](https://github.com/jotatwister/Ancaria-Reforged/releases) · [Nexus Mods](https://www.nexusmods.com/sacred/mods/77)
 
 | | |
 |---|---|
@@ -33,7 +33,7 @@ mejoras de calidad de vida. Escrito en C# (.NET, NativeAOT).
   nivel y bonus de supervivencia, misiones activas a la izquierda, nombres de objetos fijos con Alt y filtro por
   calidad, y comparación de cada objeto con el que llevas equipado.
 - **Comodidad:** el oro se recoge solo al pasar a su lado (en partida individual) y, al atacar a un enemigo, el cursor
-  se queda sobre él.
+  se queda sobre él, también con armas a distancia.
 - **Autocast:** las teclas de las artes (6 a 0) lanzan el arte al momento hacia el cursor, sin tener que
   seleccionarlo y pulsar el botón derecho. Las teclas del juego se pueden reasignar desde el menú.
 - **Letra a elegir:** cualquier fuente instalada en Windows (o un .ttf/.otf en la carpeta `font` del juego) para los
@@ -131,7 +131,7 @@ quality-of-life improvements. Written in C# (.NET, NativeAOT).
   level and survival bonus, active quests on the left, pinned item names with Alt with a quality filter, and a
   comparison of every item with the one you have equipped.
 - **Convenience:** gold is picked up just by walking past it (single player), and when you attack an enemy the cursor
-  stays on it.
+  stays on it, ranged weapons included.
 - **Autocast:** the art keys (6 to 0) cast the art at once towards the cursor, without selecting it and pressing the
   right button. The game's keys can be rebound from the menu.
 - **Choose your font:** any font installed in Windows (or a .ttf/.otf in the game's `font` folder) for the game's and

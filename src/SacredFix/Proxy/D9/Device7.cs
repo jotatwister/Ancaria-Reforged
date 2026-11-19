@@ -75,7 +75,7 @@ internal sealed unsafe class Device7
         v.Set(9, (nint)(delegate* unmanaged[Stdcall]<nint, nint*, int>)&GetRenderTarget);
         v.Set(10, (nint)(delegate* unmanaged[Stdcall]<nint, uint, nint, uint, uint, float, uint, int>)&Clear);
         v.Set(11, (nint)(delegate* unmanaged[Stdcall]<nint, int, float*, int>)&SetTransform);
-        v.Set(12, (nint)(delegate* unmanaged[Stdcall]<nint, int, float*, int>)&GetTransform);
+        v.Set(12, GetTransformStub());
         v.Set(13, (nint)(delegate* unmanaged[Stdcall]<nint, nint, int>)&SetViewport);
         v.Set(14, (nint)(delegate* unmanaged[Stdcall]<nint, int, float*, int>)&MultiplyTransform);
         v.Set(15, (nint)(delegate* unmanaged[Stdcall]<nint, nint, int>)&GetViewport);
@@ -156,17 +156,123 @@ internal sealed unsafe class Device7
     [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvStdcall) })]
     private static int SetTransform(nint self, int s, float* m)
     {
-        if (m != null) { var me = Me(self); if (!me._transforms.TryGetValue(s, out var c)) me._transforms[s] = c = new float[16]; for (int i = 0; i < 16; i++) c[i] = m[i]; }
-        return B.SetTransform(s, m);
+        try
+        {
+            if (m == null) return B.SetTransform(s, m);
+            var me = Me(self);
+            lock (_xf)
+            {
+                if (!me._transforms.TryGetValue(s, out var c)) me._transforms[s] = c = new float[16];
+                for (int i = 0; i < 16; i++) c[i] = m[i];
+                if (s == 3 && WidenProjection) return me.ApplyProjection();
+                return B.SetTransform(s, m);
+            }
+        }
+        catch (Exception ex) { if (_xfErrors++ < 4) Log.Error("D9: SetTransform: " + ex.Message); return B.SetTransform(s, m); }
     }
+
+    /// <summary>
+    /// Panorámico: se dibuja con la proyección ancha (±200·W/H), pero el juego la sigue leyendo (GetTransform) y
+    /// calculando con la suya de 4:3, como en el original y en sacred-bild. (Antes se ensanchaba en su código, grupo 10,
+    /// y su lógica leía la ancha: al ir a montar el caballo el héroe no llegaba nunca; informe de un probador.) Solo las
+    /// del mundo y con el viewport de toda la imagen; se vuelve a decidir al cambiar el viewport. Con _xf tomado.
+    /// </summary>
+    private int ApplyProjection()
+    {
+        if (!_transforms.TryGetValue(3, out var c)) return 0;
+        fixed (float* m = c)
+        {
+            if (!IsWorldOrtho(m) || !FullViewport()) return B.SetTransform(3, m);
+            float* w = stackalloc float[16];
+            for (int i = 0; i < 16; i++) w[i] = m[i];
+            float k = MathF.Abs(m[5]) * Display.Height / Display.Width / MathF.Abs(m[0]);
+            w[0] *= k; w[12] *= k;
+            if (_widenLogs < 4) { _widenLogs++; Log.Info($"D9: proyección del mundo ±{1 / MathF.Abs(m[0]):0.#} -> ±{1 / MathF.Abs(w[0]):0.#} (el juego sigue leyendo la suya)"); }
+            return B.SetTransform(3, w);
+        }
+    }
+    private static int _widenLogs, _xfErrors;
+    /// <summary>El juego llama a SetTransform/GetTransform desde dos hilos (el principal y el de dibujo).</summary>
+    private static readonly object _xf = new();
+
+    /// <summary>GetTransform normal: la proyección, tal como la puso el juego (sin ensanchar).</summary>
     [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvStdcall) })]
-    private static int GetTransform(nint self, int s, float* m) => B.GetTransform(s, m);
+    private static int GetTransform(nint self, int s, float* m)
+    {
+        try
+        {
+            lock (_xf)
+            {
+                if (s == 3 && m != null && WidenProjection && Me(self)._transforms.TryGetValue(3, out var c))
+                {
+                    for (int i = 0; i < 16; i++) m[i] = c[i];
+                    return 0;
+                }
+                return B.GetTransform(s, m);
+            }
+        }
+        catch (Exception ex) { if (_xfErrors++ < 4) Log.Error("D9: GetTransform: " + ex.Message); return Layer.E_FAIL; }
+    }
+
+    /// <summary>
+    /// GetTransform para la prueba de visibilidad de cada criatura (0x4057D0, que lee en 0x4059F3): compara en coordenadas
+    /// de recorte (−1..1) y necesita la proyección de dibujo (la ancha); con la de 4:3 descartaba los personajes de los
+    /// laterales (se veía solo su sombra, que va por el descarte 2D).
+    /// </summary>
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvStdcall) })]
+    private static int GetTransformDrawn(nint self, int s, float* m)
+    {
+        try { lock (_xf) return B.GetTransform(s, m); }
+        catch { return Layer.E_FAIL; }
+    }
+
+    /// <summary>Puente de GetTransform: «cmp dword [esp], 0x4059F3 / je GetTransformDrawn / jmp GetTransform» (sin estado compartido).</summary>
+    private static nint GetTransformStub()
+    {
+        nint normal = (nint)(delegate* unmanaged[Stdcall]<nint, int, float*, int>)&GetTransform;
+        nint drawn = (nint)(delegate* unmanaged[Stdcall]<nint, int, float*, int>)&GetTransformDrawn;
+        var code = new byte[] { 0x81, 0x3C, 0x24, 0xF3, 0x59, 0x40, 0x00, 0x0F, 0x84, 0, 0, 0, 0, 0xE9, 0, 0, 0, 0 };
+        nint stub = Mem.AllocCode(code);
+        *(int*)(stub + 9) = (int)(drawn - (stub + 13));
+        *(int*)(stub + 14) = (int)(normal - (stub + 18));
+        return stub;
+    }
+
+    /// <summary>Panorámico con nuestra capa: la proyección del mundo se ensancha al dibujar (lo activa Widescreen).</summary>
+    public static bool WidenProjection;
+
+    /// <summary>
+    /// Ortográficas 4:3 del mundo: la del dibujo (±267·z x ±200·z, profundidad 3100: 0x624F4F, 0x6282C9, 0x628C51,
+    /// 0x40F25B), la de los personajes (±512 x ±384, profundidad 2400: 0x40EBBA) y la del motor (profundidad 2500:
+    /// 0x60C187). Las 2D de la interfaz van en el lienzo de 1024 (FullViewport las deja fuera).
+    /// </summary>
+    private static bool IsWorldOrtho(float* m)
+    {
+        if (m[15] != 1f || m[11] != 0f || m[3] != 0f || m[7] != 0f || m[1] != 0f || m[4] != 0f || m[0] == 0f || m[5] == 0f) return false;
+        float depth = m[10] != 0f ? 1f / MathF.Abs(m[10]) : 0f;
+        if (depth < 2000f || depth > 3500f) return false;
+        float ratio = MathF.Abs(m[5] / m[0]); // semiancho / semialto
+        return ratio > 1.30f && ratio < 1.37f && Display.Width * 3 > Display.Height * 4 + 8;
+    }
+
+    /// <summary>¿El viewport actual ocupa todo el ancho de la imagen? (el mundo sí; la interfaz va en el lienzo de 1024)</summary>
+    private bool FullViewport() => !_hasViewport || _viewport[2] >= Display.Width - 2;
     [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvStdcall) })]
     private static int MultiplyTransform(nint self, int s, float* m) => B.MultiplyTransform(s, m);
     [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvStdcall) })]
     private static int SetViewport(nint self, nint vp)
     {
-        if (vp != 0) { var me = Me(self); for (int i = 0; i < 6; i++) me._viewport[i] = ((int*)vp)[i]; me._hasViewport = true; }
+        if (vp != 0)
+        {
+            var me = Me(self);
+            lock (_xf)
+            {
+                bool wasFull = me.FullViewport();
+                for (int i = 0; i < 6; i++) me._viewport[i] = ((int*)vp)[i];
+                me._hasViewport = true;
+                if (WidenProjection && wasFull != me.FullViewport()) { try { me.ApplyProjection(); } catch { } }
+            }
+        }
         return B.SetViewport(vp);
     }
     [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvStdcall) })]

@@ -75,6 +75,7 @@ internal static class Bootstrap
         SacredFix.Proxy.D3DTrace.Init(cfg);
         SacredFix.Proxy.UiDump.Init(cfg);
         SacredFix.Proxy.MiniMap.Init(cfg);
+        SacredFix.Proxy.HeroWatch.Init(cfg);
         SacredFix.Proxy.BuffBar.Init(cfg);
         SacredFix.Proxy.KeyInput.Init(cfg);
         SacredFix.Proxy.DebugScan.Init(cfg);
