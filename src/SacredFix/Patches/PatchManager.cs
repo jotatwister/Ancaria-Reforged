@@ -29,6 +29,7 @@ internal static class PatchManager
         new Widescreen(),
         new ObjectCache(),
         new LayeredTiles(),
+        new WaterTiles(),
         new GameLanguage(),
         new GameFonts(),
         new FontAtlas(),

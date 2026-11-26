@@ -432,10 +432,7 @@ internal sealed class Widescreen : IPatch
         if (groups.Contains(9)) all.AddRange(Group9);
         // 10 = 14 + 15. 14: proyección del dibujado del mundo (0x624E30) y de la cámara (0x628130);
         // 15: las del cambio de zoom (0x628310) y la carga (0x6288F0). Separados para la bisección.
-        // 14 = 141 (proyección del mundo, 0x624F21/2F) + 142 (cámara, 0x62829B/A9) + 143 (visibilidad, 0x44CF20)
         bool g14 = groups.Contains(10) || groups.Contains(14), g15 = groups.Contains(10) || groups.Contains(15);
-        bool g141 = g14 || groups.Contains(141), g142 = g14 || groups.Contains(142), g143 = g14 || groups.Contains(143);
-        if (!g14 && (g141 || g142)) g14 = true; // (el grupo 8 y el bucle de abajo)
         // Con nuestra capa D3D la proyección del mundo se ensancha al dibujar (Device7.WidenProjection) y el juego sigue
         // leyendo y calculando con la de 4:3: no se tocan sus proyecciones (grupos 10 y 16) ni hace falta la copia de
         // visibilidad (0x44CF20 ya sale bien con la original). Igual que sacred-bild, que no ensancha la del juego.
@@ -461,7 +458,7 @@ internal sealed class Widescreen : IPatch
             foreach (var e in Group10)
             {
                 bool first = e.instr < 0x628300; // 0x624F21/2F y 0x62829B/A9
-                if (first ? (e.instr < 0x625000 ? g141 : g142) : g15) all.Add(e);
+                if (first ? g14 : g15) all.Add(e);
             }
         }
         if (groups.Contains(12)) all.AddRange(Group12);
@@ -507,14 +504,7 @@ internal sealed class Widescreen : IPatch
             Log.Info($"[{Name}]   0x{instr:X8} {what}: {orig} -> {value}");
             changed++;
         }
-        // (prueba descartada: leer la proyección como 4:3 corta el bucle del caballo, pero descoloca la cámara y oculta los personajes)
-        if (!layerProj && (groups.Contains(10) || groups.Contains(14) || groups.Contains(143))) { InstallVisibilityScale(); changed += 2; }
-        // prueba (caballo): sin el seguimiento suave de la cámara de 0x6103F0 (el «jg» de 0x610473 pasa a «jmp»)
-        if (cfg.GetBool("Debug", "NoCamFollow", false) && Mem.Matches(0x610473, new byte[] { 0x7F, 0x2D }))
-        {
-            Mem.WriteBytes(0x610473, new byte[] { 0xEB, 0x2D });
-            Log.Info($"[{Name}] prueba: seguimiento suave de la cámara (0x610473) desactivado");
-        }
+        if (!layerProj && g14) { InstallVisibilityScale(); changed += 2; }
         if (groups.Contains(17)) { InstallCameraCenter(); changed += 3; }
         if (groups.Contains(11))
             foreach (var at in CamWidthReads)

@@ -1,6 +1,6 @@
 # Ancaria Reforged
 
-**Versión / Version 0.9.3 (beta)** · **Descarga / Download:** [GitHub](https://github.com/jotatwister/Ancaria-Reforged/releases) · [Nexus Mods](https://www.nexusmods.com/sacred/mods/77)
+**Versión / Version 0.9.4 (beta)** · **Descarga / Download:** [GitHub](https://github.com/jotatwister/Ancaria-Reforged/releases) · [Nexus Mods](https://www.nexusmods.com/sacred/mods/77)
 
 | | |
 |---|---|
@@ -56,7 +56,8 @@ mejoras de calidad de vida. Escrito en C# (.NET, NativeAOT).
 - **Tu idioma.** La versión de Steam y GOG solo trae el inglés; con los archivos de otra versión, textos y voces en tu
   idioma.
 - **Arreglos de estabilidad.** Cuelgues al arrancar, cierres con Alt+Tab y con los vídeos, el color de
-  16 bits en Windows modernos y los bajones de FPS en las ciudades.
+  16 bits en Windows modernos, los cierres con el zoom alejado junto a mucha agua y los bajones de FPS en las
+  ciudades.
 - **Información que el juego no da.** Buffos activos con su tiempo, misiones en pantalla, nivel y bonus de
   supervivencia, segundos de recarga, filtros del botín por calidad y comparación con lo equipado.
 - **Menos clics.** Recogida del oro al pasar, cursor sobre el enemigo atacado y autocast de las artes de combate.
@@ -154,8 +155,8 @@ quality-of-life improvements. Written in C# (.NET, NativeAOT).
   antialiasing, without changing what you see.
 - **Your language.** The Steam and GOG version only ships English; with the files of another version, texts and voices
   in your language.
-- **Stability fixes.** Hangs at startup, crashes with Alt+Tab and videos, 16-bit colour on modern Windows
-  and FPS drops in towns.
+- **Stability fixes.** Hangs at startup, crashes with Alt+Tab and videos, 16-bit colour on modern Windows,
+  crashes when zoomed out near large bodies of water and FPS drops in towns.
 - **Information the game doesn't give you.** Active buffs with their remaining time, quests on screen, level and
   survival bonus, cooldown seconds, loot filters by quality and a comparison with your equipped items.
 - **Fewer clicks.** Gold pickup on the way, the cursor stays on the attacked enemy, and autocast for combat arts.
